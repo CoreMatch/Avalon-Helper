@@ -13,6 +13,7 @@ import net.rwhps.server.data.global.NetStaticData.netService
 import net.rwhps.server.game.manage.IRwHpsManage
 import net.rwhps.server.net.NetService
 import net.rwhps.server.net.core.IRwHps
+import net.rwhps.server.net.netconnectprotocol.RwHps
 import net.rwhps.server.plugin.internal.headless.HessMain
 import net.rwhps.server.plugin.internal.headless.inject.core.GameEngine
 import net.rwhps.server.util.inline.findField
@@ -47,7 +48,12 @@ class CustomServerSocket(var1: ad): ServerAcceptRunnable(var1), Closeable {
         GameEe.aq()
         Thread.currentThread().name = "NewConnectionWorker-" + (if (f) "udp" else "tcp") + " - " + this.e
 
-        val iRwHps = IRwHpsManage.addIRwHps(this::class.java.classLoader, IRwHps.NetType.ServerProtocol)
+        // 枢纽手术试验一 (2026-11-05): 直接构造运行期实现类 RwHps, 不再经
+        // IRwHpsManage.addIRwHps 的 ServiceLoader "ServerProtocol" 查找 +
+        // 回退 "IRwHps" (该协议名从无注册, 回退恒发生). 注册仍走
+        // IRwHpsManage.registerIRwHps, 保持 firstServer/NetStaticData.RwHps 读取面.
+        val iRwHps = RwHps(this::class.java.classLoader, IRwHps.NetType.ServerProtocol)
+        IRwHpsManage.registerIRwHps(this::class.java.classLoader, iRwHps)
         GameEngine.iRwHps = iRwHps
         HessMain.serverServerCommands.handleMessage("startnetservice $netServiceID true $port", iRwHps)
     }
