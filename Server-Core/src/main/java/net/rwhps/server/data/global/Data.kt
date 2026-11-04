@@ -9,7 +9,6 @@
 
 package net.rwhps.server.data.global
 
-import net.rwhps.server.command.ex.Vote
 import net.rwhps.server.core.Application
 import net.rwhps.server.data.bean.BeanCoreConfig
 import net.rwhps.server.data.bean.BeanRelayConfig
@@ -152,7 +151,6 @@ object Data {
     lateinit var i18NBundle: I18NBundle
 
     @JvmField
-    var vote: Vote? = null
 
     // TODO
     var bindForcibly = true

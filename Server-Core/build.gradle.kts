@@ -14,7 +14,6 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlinVersion}")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 
-    implementation(project(":TimeTaskQuartz"))
     implementation(project(":ASM-Framework"))
 
     //implementation("com.github.minxyzgo.rw-injection:core:077d92e08c")

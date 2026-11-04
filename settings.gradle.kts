@@ -1,4 +1,3 @@
-include(":TimeTaskQuartz")
 include(":ASM-Framework")
 include(":Server-Core")
 

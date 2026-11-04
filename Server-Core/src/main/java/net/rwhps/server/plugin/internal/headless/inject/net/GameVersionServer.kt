@@ -195,10 +195,6 @@ open class GameVersionServer(val playerConnectX: PlayerConnectX): AbstractNetCon
                 Threads.closeTimeTask(CallTimeTask.PlayerAfkTask)
             }
 
-            if (Data.vote != null) {
-                Data.vote!!.toVote(player, message)
-            }
-
             // Msg Command
             if (message.startsWith(".") || message.startsWith("-") || message.startsWith("_")) {
                 val strEnd = min(message.length, 3)

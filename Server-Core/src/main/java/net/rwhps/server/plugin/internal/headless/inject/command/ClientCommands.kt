@@ -12,7 +12,6 @@ package net.rwhps.server.plugin.internal.headless.inject.command
 import android.graphics.PointF
 import com.corrodinggames.rts.game.n
 import com.corrodinggames.rts.gameFramework.j.ai
-import net.rwhps.server.command.ex.Vote
 import net.rwhps.server.core.thread.CallTimeTask
 import net.rwhps.server.core.thread.Threads
 import net.rwhps.server.data.global.Data
@@ -24,7 +23,6 @@ import net.rwhps.server.game.event.game.ServerGameStartEvent
 import net.rwhps.server.game.manage.HeadlessModuleManage
 import net.rwhps.server.game.manage.MapManage
 import net.rwhps.server.game.player.PlayerHess
-import net.rwhps.server.game.room.RelayRoom
 import net.rwhps.server.net.core.server.AbstractNetConnectServer
 import net.rwhps.server.net.netconnectprotocol.realize.GameVersionRelay
 import net.rwhps.server.plugin.internal.headless.inject.core.GameEngine
@@ -450,9 +448,6 @@ internal class ClientCommands(handler: CommandHandler) {
                 gameModule.room.sync = "on".equals(args[0], true)
                 player.sendSystemMessage(localeUtil.getinput("server.sync", if (gameModule.room.sync) "启用" else "禁止"))
             }
-        }
-        handler.register("vote", "<gameover>", "clientCommands.vote") { _: Array<String>?, player: PlayerHess ->
-            Data.vote = Vote("gameover", player)
         }
         handler.register("setmaxplayer", "<number>", "clientCommands.vote") { args: Array<String>, player: PlayerHess ->
             n.b(args[0].toInt(), true)

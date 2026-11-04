@@ -12,7 +12,6 @@ package net.rwhps.server.core.thread
 import net.rwhps.server.struct.list.Seq
 import net.rwhps.server.util.Time
 import net.rwhps.server.util.concurrent.threads.GetNewThreadPool
-import net.rwhps.timetask.task.TimeTaskManage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit
 object Threads {
     private val CORE_THREAD: ExecutorService = GetNewThreadPool.getNewFixedThreadPool(3, "Core-")
     private var CORE_NET_THREAD: ExecutorService = GetNewThreadPool.getNewFixedThreadPool(4, "Core-Net-")
-    private val SERVICE = TimeTaskManage() // 10 Thread
+    private val SERVICE = SimpleTimeTask() // 仓库瘦身: Quartz -> 等价替身 (2026-11-05)
     private val OTHER_THREAD = GetNewThreadPool.getNewFixedThreadPool(10, "Other-")
 
     /** Execute runnable on exit  */
