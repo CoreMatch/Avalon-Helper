@@ -135,6 +135,34 @@ object GoBridge {
             GameEngine.netEngine.ay.b = "$mapPlayer$mapName.tmx"
         }
         module.gameScriptMultiPlayer.multiplayerStart()
+
+        // 上游房间状态迁移 (isStartGame/startTime/endTime) 由 START_GAME 广播经
+        // PlayerConnectX 触发的 roomStartGame() 完成; Go 驱动流里没有注册客户端
+        // 时会走不到那条路, 缺 startTime 会让 game.result 的 gameTime
+        // (concurrentSecond - startTime) 退化成 Unix 时间戳. 在这里等价补齐
+        // (有意修正, 作者已批准, 2026-11-04; DECISIONS D-9 后续).
+        // 不调 roomStartGame() 本体: 它会另起 JVM 侧检查线程, 与 Go 侧的
+        // CallManage 检查线程职责重叠.
+        module.room.isStartGame = true
+        setRoomTime(module.room)
+    }
+
+    /** startTime/endTime 为 private set, 反射写入 (字段名对应上游 ServerRoom) */
+    private fun setRoomTime(room: net.rwhps.server.game.room.ServerRoom) {
+        try {
+            val now = net.rwhps.server.util.Time.concurrentSecond()
+            for ((name, value) in arrayOf(
+                "startTime" to now,
+                "endTime" to now + Data.configServer.maxGameIngTime
+            )) {
+                room.javaClass.getDeclaredField(name).apply {
+                    isAccessible = true
+                    setInt(room, value)
+                }
+            }
+        } catch (e: Exception) {
+            Log.error("[GoBridge] setRoomTime", e)
+        }
     }
 
     /** 对应协议 room.stop: 上游 ServerRoom.gr (含引擎 reBootServer) */
