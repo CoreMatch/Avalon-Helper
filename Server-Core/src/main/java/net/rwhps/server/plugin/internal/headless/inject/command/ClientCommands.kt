@@ -23,7 +23,6 @@ import net.rwhps.server.game.event.game.ServerGameStartEvent
 import net.rwhps.server.game.manage.HeadlessModuleManage
 import net.rwhps.server.game.manage.MapManage
 import net.rwhps.server.game.player.PlayerHess
-import net.rwhps.server.game.room.RelayRoom
 import net.rwhps.server.net.core.server.AbstractNetConnectServer
 import net.rwhps.server.net.netconnectprotocol.realize.GameVersionRelay
 import net.rwhps.server.plugin.internal.headless.inject.core.GameEngine
