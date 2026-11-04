@@ -140,9 +140,10 @@ class Initialization {
 
         internal fun loadService() {
             // 仓库瘦身 (2026-11-05): Relay 协议注册随 netconnectprotocol relay
-            // 实现删除 —— helper 形态不做 relay. CustomServerSocket 运行时经
-            // IRwHpsManage 回退取 "IRwHps" (RwHps), 该注册与 GameVersionPacket/
-            // FakeRwHps 注册必须保留.
+            // 实现删除 —— helper 形态不做 relay. 枢纽手术试验一后 CustomServerSocket
+            // 直接构造 RwHps (不经下方 "IRwHps" 回退); 该注册保留给
+            // IRwHpsManage.addIRwHps 回退路径 (NetService mix 分支静态引用).
+            // GameVersionPacket/FakeRwHps 注册必须保留.
             ServiceLoader.addService(ServiceType.ProtocolPacket, IRwHps.NetType.GlobalProtocol.name, GameVersionPacket::class.java)
 
             ServiceLoader.addServiceObject(ServiceType.PacketType, IRwHps.NetType.GlobalProtocol.name, PacketType.INSTANCE)

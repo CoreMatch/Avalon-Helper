@@ -33,6 +33,17 @@ object IRwHpsManage {
         return addIRwHps(this::class.java.classLoader, value, customId, false)
     }
 
+    /**
+     * 枢纽手术试验一 (2026-11-05): 注册外部直接构造的 IRwHps.
+     * 不做 ServiceLoader 查找/回退, 仅维持 rwHpsList 供 firstServer 读取.
+     */
+    fun registerIRwHps(classLoader: ClassLoader, value: IRwHps, customId: String = value.netType.name) {
+        requireNotNull(classLoader.name) {
+            "ClassLoader Name is Null"
+        }
+        rwHpsList[classLoader.name + customId] = value
+    }
+
     @JvmOverloads
     @Throws(ImplementedException::class)
     fun addIRwHps(classLoader: ClassLoader, value: IRwHps.NetType, customId: String = value.name, classLoaderUse: Boolean = true): IRwHps {
