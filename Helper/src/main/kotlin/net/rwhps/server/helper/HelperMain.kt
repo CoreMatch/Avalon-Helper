@@ -360,6 +360,20 @@ private fun dispatch(line: String) {
             respond(id, true)
         }
 
+        "room.settings" -> {
+            val errReason = awaitEngine(120)
+            if (errReason != null) {
+                respond(id, false, errReason); return
+            }
+            // v2-ext 扩展 (Cascade 门面, D-20): 引擎侧房间设置写入
+            val settings = req.get("settings")
+            if (settings == null || !settings.isJsonObject) {
+                respond(id, false, "missing settings"); return
+            }
+            Bridge.call("applySettings", String::class.java to settings.toString())
+            respond(id, true)
+        }
+
         "room.removeplayer" -> {
             val errReason = awaitEngine(120)
             if (errReason != null) {

@@ -15,6 +15,7 @@ package net.rwhps.server.plugin.internal.headless.inject.go
 
 import com.corrodinggames.rts.gameFramework.j.ai
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import net.rwhps.server.data.global.Data
 import net.rwhps.server.game.GameMaps
 import net.rwhps.server.game.event.core.EventListenerHost
@@ -222,6 +223,41 @@ object GoBridge {
     @JvmStatic
     fun syncAll() {
         GameEngine.data.gameLinkFunction.allPlayerSync()
+    }
+
+    /**
+     * 对应 room.settings (Cascade 后端契约门面, DECISIONS D-20):
+     * 把房间设置写入引擎 gameLinkServerData.
+     *
+     * 映射照搬上游 ClientCommands 的 credits/nukes/fog/sharedcontrol/
+     * startingunits/income 命令 (含 credits 金额->档位映射表与
+     * disableNuke 的否定语义); maxUnits 对应 AbstractLinkGameServerData.maxUnit.
+     * 只写负载里提供的字段.
+     */
+    @JvmStatic
+    fun applySettings(settingsJson: String) {
+        val s = JsonParser.parseString(settingsJson).asJsonObject
+        val data = GameEngine.data.gameLinkServerData
+        s.get("credits")?.asInt?.let { money ->
+            data.credits = when (money) {
+                0 -> 1
+                1000 -> 2
+                2000 -> 3
+                5000 -> 4
+                10000 -> 5
+                50000 -> 6
+                100000 -> 7
+                200000 -> 8
+                4000 -> 0
+                else -> 0
+            }
+        }
+        s.get("fog")?.asInt?.let { data.fog = it }
+        s.get("income")?.asFloat?.let { data.income = it }
+        s.get("disableNuke")?.asBoolean?.let { data.nukes = !it }
+        s.get("sharedControl")?.asBoolean?.let { data.sharedcontrol = it }
+        s.get("startingUnits")?.asInt?.let { data.startingunits = it }
+        s.get("maxUnits")?.asInt?.let { data.maxUnit = it }
     }
 
     /**
