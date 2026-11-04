@@ -47,13 +47,14 @@ dependencies {
         exclude("org.json")
     }
 
-    implementation("net.java.dev.jna:jna:5.14.0")
-
+    // 仓库瘦身阶段二 (2026-11-05): 移除 net.java.dev.jna:jna 与
+    // jline-terminal-jna —— 唯一触达点 Initialization.checkEnvironment 已删,
+    // 类载日志证明 com.sun.jna 0 加载 (~1.8M jar). jline-reader/jline-terminal
+    // 保留: Data.kt:164 privateReader 字段编译期钉住 (运行期 0 加载).
     implementation("org.jline:jline-reader:${Versions.jLineVersion}")
     implementation("org.jline:jline-terminal:${Versions.jLineVersion}") {
         exclude("org.jline", "jline-native")
     }
-    implementation("org.jline:jline-terminal-jna:${Versions.jLineVersion}")
 
     implementation("it.unimi.dsi:fastutil-core:8.5.13")
 
