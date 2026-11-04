@@ -82,6 +82,9 @@ tasks.jar {
     }) {
         exclude("net/rwhps/server/net/core/ConnectionAgreement.class")
         exclude("net/rwhps/server/net/core/ConnectionAgreement\$*.class")
+        // Go+helper 形态不承载任何 netty 网络栈 (运行时类载日志 0 命中):
+        // 上游的 netty 依赖随 Server-Core api 传递进来, 打包期整体排除.
+        exclude("io/netty/**")
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
