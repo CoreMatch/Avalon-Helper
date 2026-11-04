@@ -15,7 +15,6 @@ import net.rwhps.server.io.GameInputStream
 import net.rwhps.server.io.GameOutputStream
 import net.rwhps.server.io.packet.Packet
 import net.rwhps.server.io.packet.type.PacketType
-import net.rwhps.server.net.GroupNet
 import net.rwhps.server.net.core.ConnectionAgreement
 import net.rwhps.server.util.Time
 import net.rwhps.server.util.annotations.core.DependsClassLoader
@@ -166,9 +165,9 @@ abstract class AbstractNetConnect(protected val connectionAgreement: ConnectionA
         return true
     }
 
-    protected fun close(groupNet: GroupNet?) {
+    protected fun close() {
         try {
-            connectionAgreement.close(groupNet)
+            connectionAgreement.close()
         } catch (e: Exception) {
             Log.error("Close Connect", e)
         }

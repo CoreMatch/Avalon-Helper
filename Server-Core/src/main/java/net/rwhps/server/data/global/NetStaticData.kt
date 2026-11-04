@@ -10,7 +10,6 @@
 package net.rwhps.server.data.global
 
 import net.rwhps.server.game.manage.IRwHpsManage
-import net.rwhps.server.net.GroupNet
 import net.rwhps.server.net.NetService
 import net.rwhps.server.net.core.IRwHps
 import net.rwhps.server.net.netconnectprotocol.FakeRwHps
@@ -20,9 +19,6 @@ import net.rwhps.server.util.alone.BlackList
  * @author Dr (dr@der.kim)
  */
 object NetStaticData {
-    @JvmField
-    val groupNet = GroupNet()
-
     @JvmField
     val blackList = BlackList()
 

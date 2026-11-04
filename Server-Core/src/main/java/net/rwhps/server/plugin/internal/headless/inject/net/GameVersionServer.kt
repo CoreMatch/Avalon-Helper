@@ -389,7 +389,7 @@ open class GameVersionServer(val playerConnectX: PlayerConnectX): AbstractNetCon
 
             player.clear()
         }
-        super.close(null)
+        super.close()
     }
 
     override fun sendGameSave(packet: Packet) {

@@ -15,7 +15,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.util.AttributeKey
 import net.rwhps.server.game.event.global.NetConnectCloseEvent
 import net.rwhps.server.io.packet.Packet
-import net.rwhps.server.net.GroupNet
 import net.rwhps.server.net.handler.bio.PackagingSocket
 import net.rwhps.server.net.netconnectprotocol.FakeRwHps
 import net.rwhps.server.util.IpUtils
@@ -156,24 +155,6 @@ class ConnectionAgreement {
         protocolType = sender
     }
 
-    fun add(groupNet: GroupNet) {
-        if (objectOutStream is ChannelHandlerContext) {
-            groupNet.add(objectOutStream.channel())
-        } else if (objectOutStream is PackagingSocket) {
-            groupNet.add(this)
-        }
-    }
-
-    fun remove(groupNet: GroupNet?) {
-        if (groupNet != null) {
-            if (objectOutStream is ChannelHandlerContext) {
-                groupNet.remove(objectOutStream.channel())
-            } else if (objectOutStream is PackagingSocket) {
-                groupNet.remove(this)
-            }
-        }
-    }
-
     /**
      * 接管Send逻辑
      * 整合不同协议的发送逻辑
@@ -188,14 +169,11 @@ class ConnectionAgreement {
 
     /**
      * 关闭连接
-     * @param groupNet     Multicast pools
      * @throws IOException
      */
     @Throws(IOException::class)
-    fun close(groupNet: GroupNet?) {
+    fun close() {
         PluginManage.runGlobalEventManage(NetConnectCloseEvent(this)).await()
-
-        remove(groupNet)
 
         if (objectOutStream is ChannelHandlerContext) {
             objectOutStream.channel().close()
