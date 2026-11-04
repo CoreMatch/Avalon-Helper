@@ -40,7 +40,24 @@
 | `Java-Doc/` | 4K（仅 build 桩） | Dokka 输出目录模块，无源码 |
 | `UPList/` | 8K（README + 白名单 json） | 上游插件残留资料；功能已由 Go-Server 内建（`internal/uplist`），且目录不在 settings.gradle |
 
-**Server-Core 内 45 个零引用文件**（静态闭包外：无 import、无 FQN/字符串引用、无同包类型名引用；运行时类载日志中亦未出现）——完整清单见提交 `git show` 与 `/tmp/delete_set.txt`（分析产物），按目录：`net/api` 1、`net/debug` 1、`net/netconnectprotocol` 2（TypeHttp/TypeRemoteControl）、`plugin/beta/banunit` 2、`test/` 2、`util/` 及子包 35、`core/thread/TimeTaskData.kt` 1、`data/bean/internal/RCN.kt` 1、`dependent/redirections/fast/FastIntValueClass.kt` 1、`game/` 6、`struct/` 2。
+**Server-Core 内 12 个零引用文件**（静态闭包外：无 import、无 FQN/字符串引用、无同包类型名引用；运行时类载日志中亦未出现）：
+
+```
+game/headless/README.kt                    net/api/WebGetRelayInfo.kt
+net/debug/SafetyConnect.kt                 plugin/beta/banunit/BanData.kt
+plugin/beta/banunit/BanUnitMain.kt         test/MapLoad.kt
+test/Relay.kt                              util/annotations/ioc/Plugin.kt
+util/annotations/ioc/ServiceProtocol.kt    util/internal/kotlin/SuppressProMax.kt
+util/privately/BundlesCheck.kt             util/privately/FakeHessRes.kt
+```
+
+> 方法论备注：首轮按"可解析边"闭包删了 44 个文件，`:Server-Core:compileJava` 即失败
+> （`ReliableSocket.java` 经通配 import 使用被删的 `rudp/impl/Timer.kt`——Java 分号
+> 尾与通配 import 曾使静态扫描漏边），已整段回滚。随后改为**保守规则**：凡引用无法
+> 精确解析到类（顶层函数/扩展函数/通配 import 等），其目标包整包保留；并按
+> `HessClassPathProperties.headlessPath` 把 `plugin/internal/headless/inject/**`
+> 全部划入装载链保留区（引擎按包前缀整体复制进游戏 classloader，`inject/ex/FFA_X.kt`
+> 因此从删除集移入待定）。保守规则下的删除集即上述 12 个文件。
 
 **配套清理**
 
@@ -56,6 +73,7 @@
 
 | 待定区域 | 钉住它的枢纽（静态引用点） | 运行时证据 | 删除所需改动 | 风险 |
 | --- | --- | --- | --- | --- |
+| `plugin/internal/headless/inject/ex/FFA_X.kt` | 无静态引用，但 `GameStartInit` 按 `headlessPath` 前缀把 `inject/**` 整体复制进游戏 classloader | 本局（非 FFA）未加载；FFA 局是否被引擎按名加载无法静态排除 | 需 FFA 模式真实对局验证后再定 | 中（装载链按包前缀复制，静态扫描覆盖不到） |
 | `command/`（6 文件）+ `command/ex/Vote.kt` 链 | `Main.kt`（import 三个命令类）；`Data.kt`→`Vote`；`plugin/internal/headless/inject/command/ClientCommands.kt`→`Vote` | **0 个类被加载**（helper 自建 CommandHandler，只注册 startnetservice） | 删 `Main.kt` 需先改 `Initialization.kt` 的 `Main::class.java.getResourceAsStream`（资源锚点，换成任意保留类即可）；去 `Data`/`ClientCommands` 的 Vote 引用 | 低：运行时零加载；建议验证=四项验证全跑 |
 | `plugin/` 生态（beta/center/GetVersion/PluginsLoad 等 ~20 文件，**不含 internal/headless**） | `util/file/plugin/PluginManage.kt`（HelperMain 反射写其 pluginData 字段，必留）→`PluginsLoad`；`Main.kt`→`PluginCenter`；`custom/LoadCoreCustomPlugin.kt`→UpListMain/PlayerBindMain | 加载的 24 个 plugin 类全部位于 `plugin.internal.headless.*`（内核注入链）与 PluginManage 基础类；**beta 生态 0 加载** | 剪 PluginManage 对 PluginsLoad 的引用、删 LoadCoreCustomPlugin（仅 Main.kt 引用） | 中：PluginManage 被 HelperMain 反射使用，改后需跑真实内核测试 |
 | `net/` 大部分（~50 文件保留中运行时未载的部分） | `Initialization.loadService`（注册 TypeRelay/RwHps/FakeRwHps 等协议实现）、`NetStaticData`、`Main.kt`→NetService | 运行时仅载 21 个 net 类（ConnectionAgreement 补丁链 + 包序列化基础） | 剪 loadService 注册与 NetStaticData 字段 | 中高：协议注册表是反射取用（ServiceLoader），属"静态扫描覆盖不到"，保守待定 |
@@ -66,4 +84,4 @@
 
 ## 四、本次瘦身体量
 
-删除合计 ≈ 0.35M 源码/模块 + 失效 CI；仓库总体积 35M 中大头为 `data/gameData`（9.7M，必留）、`Server-Core/libs`（4.2M，必留）、`Server-Core/src/main/resources`（≈14M，其中 libs.zip/ip2location.7z 被保留类引用）。待定区若获批，可再减 ≈1.2M 源码。
+删除合计：3 个模块目录（16K）+ 12 个源文件（≈80K，2100+ 行）+ 失效 CI 与 4 份失效构建说明；仓库总体积 35M 中大头为 `data/gameData`（9.7M，必留）、`Server-Core/libs`（4.2M，必留）、`Server-Core/src/main/resources`（≈14M，其中 libs.zip/ip2location.7z 被保留类引用）。待定区（含首轮曾删、因保守规则恢复的 32 个文件）若获批枢纽解引用，可再减 ≈1.2M 源码。
