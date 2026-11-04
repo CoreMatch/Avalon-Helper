@@ -10,7 +10,6 @@
 package net.rwhps.server.core
 
 import com.sun.jna.NativeLibrary
-import net.rwhps.server.Main
 import net.rwhps.server.core.ServiceLoader.ServiceType
 import net.rwhps.server.core.thread.CallTimeTask
 import net.rwhps.server.core.thread.Threads
@@ -69,10 +68,10 @@ class Initialization {
     }
 
     private fun loadLang() {
-        Data.i18NBundleMap["CN"] = I18NBundle(Main::class.java.getResourceAsStream("/bundles/HPS_zh_CN.properties")!!)
-        Data.i18NBundleMap["HK"] = I18NBundle(Main::class.java.getResourceAsStream("/bundles/HPS_zh_HK.properties")!!)
-        Data.i18NBundleMap["RU"] = I18NBundle(Main::class.java.getResourceAsStream("/bundles/HPS_ru_RU.properties")!!)
-        Data.i18NBundleMap["EN"] = I18NBundle(Main::class.java.getResourceAsStream("/bundles/HPS_en_US.properties")!!)
+        Data.i18NBundleMap["CN"] = I18NBundle(Initialization::class.java.getResourceAsStream("/bundles/HPS_zh_CN.properties")!!)
+        Data.i18NBundleMap["HK"] = I18NBundle(Initialization::class.java.getResourceAsStream("/bundles/HPS_zh_HK.properties")!!)
+        Data.i18NBundleMap["RU"] = I18NBundle(Initialization::class.java.getResourceAsStream("/bundles/HPS_ru_RU.properties")!!)
+        Data.i18NBundleMap["EN"] = I18NBundle(Initialization::class.java.getResourceAsStream("/bundles/HPS_en_US.properties")!!)
 
         // Default use EN
         Data.i18NBundle = Data.i18NBundleMap["EN"]!!
