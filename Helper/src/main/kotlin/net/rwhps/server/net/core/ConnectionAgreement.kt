@@ -18,7 +18,6 @@ import net.rwhps.server.io.packet.Packet
 import net.rwhps.server.net.GroupNet
 import net.rwhps.server.net.handler.bio.PackagingSocket
 import net.rwhps.server.net.netconnectprotocol.FakeRwHps
-import net.rwhps.server.util.IPCountry
 import net.rwhps.server.util.IpUtils
 import net.rwhps.server.util.file.plugin.PluginManage
 import net.rwhps.server.util.inline.ifNullResult
@@ -40,8 +39,6 @@ class ConnectionAgreement {
     val useAgreement: String
     val ip: String
     val ipLong24: String
-    val ipCountry: String
-    val ipCountryAll: String
     internal val localPort: Int
     val id: String = UUID.randomUUID().toString()
 
@@ -69,8 +66,6 @@ class ConnectionAgreement {
 
         ip = convertIp(channel.remoteAddress().toString())
         ipLong24 = IpUtils.ipToLong24(ip, false)
-        ipCountry = IPCountry.getIpCountry(ip)
-        ipCountryAll = IPCountry.getIpCountryAll(ip)
         localPort = (channel.localAddress() as InetSocketAddress).port
 
         protocolType = { packet: Packet ->
@@ -102,8 +97,6 @@ class ConnectionAgreement {
 
         ip = convertIp(socket.remoteSocketAddressString)
         ipLong24 = IpUtils.ipToLong24(ip, false)
-        ipCountry = IPCountry.getIpCountry(ip)
-        ipCountryAll = IPCountry.getIpCountryAll(ip)
         localPort = socket.localPort
     }
 
@@ -118,8 +111,6 @@ class ConnectionAgreement {
 
         ip = "127.0.0.1"
         ipLong24 = IpUtils.ipToLong24(ip, false)
-        ipCountry = IPCountry.getIpCountry(ip)
-        ipCountryAll = IPCountry.getIpCountryAll(ip)
         localPort = 0
 
         protocolType = { }
@@ -137,8 +128,6 @@ class ConnectionAgreement {
 
         ip = ""
         ipLong24 = ""
-        ipCountry = ""
-        ipCountryAll = ""
         localPort = 0
     }
 
@@ -162,8 +151,6 @@ class ConnectionAgreement {
 
         ip = ipIn
         ipLong24 = IpUtils.ipToLong24(ip, false)
-        ipCountry = IPCountry.getIpCountry(ip)
-        ipCountryAll = IPCountry.getIpCountryAll(ip)
         localPort = 0
 
         protocolType = sender

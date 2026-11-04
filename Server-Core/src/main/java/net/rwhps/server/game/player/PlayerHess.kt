@@ -125,7 +125,6 @@ open class PlayerHess(
             put("Position", position)
             put("ConnectHexID", connectHexID)
             put("IP", con!!.coverConnect().ip)
-            put("IPCount", con!!.coverConnect().ipCountry)
             put("TCP/UDP", con!!.coverConnect().useConnectionAgreement)
             put("Admin", autoAdmin)
         }

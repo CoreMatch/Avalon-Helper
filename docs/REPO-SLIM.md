@@ -68,3 +68,34 @@
 （libs.zip 6.4M 引擎装载源 + ip2location.7z 7.5M + 字体/语言包），以上 ≈28M 全部在保留红线内；
 Go-Server 2.2M 不动。可删的源码部分已从 45.6K 行降到 39.1K 行，上游"人不人鬼不鬼"的
 发行面（Server-All 入口、插件生态、命令系统、relay 服务端、CI/文档）已全部拆除。
+
+## 第三轮（2026-11-05）：彻底删除 IP 定位功能（作者决定）
+
+作者判定："Go Server 用不上的直接删掉就行了"——不做空实现占位，整链移除。
+
+**为什么安全**：Go+helper 形态下所有连接经 GoBridge 以回环地址 `127.0.0.1` 建立
+（HelperMain.openConn），国家查询输出恒为空值；回放档案侧全仓 grep 确认 `IPCount`
+只写无读（`Event.kt` 仅把 `infoObject` 整体序列化进档案/回放素材，无反序列化必填
+依赖），删除不影响回放生成与读取。Go 侧该链自移植起即空占位（`internal/util/ip`
+注释 "Q7=C 暂不实现"），唯一生产落点 `player.InfoObject` 的 `IPCount` 亦无读取方，
+`GetAllRelayIpCountry` 仅测试调用。
+
+**删除清单**（提交 `2a096b08` Kotlin 侧 / `bee634c7` Go 侧）：
+- `util/IPCountry.kt`、`resources/ip2location.7z`（7.5M，IP2Location LITE DB5）
+- `net.renfei:ip2location` 依赖（build.gradle.kts + maven/Server-Core/implementation.txt）
+- 两处 `ConnectionAgreement`（Server-Core + Helper 补丁）的 `ipCountry/ipCountryAll`
+  字段与全部构造器赋值；`AbstractNetConnect` 透传属性
+- `PlayerHess.infoObject` 与 Go `player.InfoObject` 的 `"IPCount"` 字段
+- `RelayRoom.getAllRelayIpCountry`（零调用）与 Go `room.GetAllRelayIpCountry`（仅测试）
+  及 `RelayConnect`/player 接口中的 `IPCountry()`、7 处测试 mock
+- `Initialization.loadIpBin`（上游早注释的空壳）与 `BeanCoreConfig.ipCheckMultiLanguageSupport`
+- Go `internal/util/ip/ipcountry.go`、`agreement.go` 字段与赋值、`connect.go` 方法
+
+**验证**（当批新 jar，`-count=1`）：干净克隆 `:Helper:jar` 成功（产物 37.5M→**28.7M**，
+−8.8M）；`go build/vet/test` 49 包全绿；`TestRealHelperV2Ext` PASS 8.63s；
+`TestE2ERealGameToSettlement` PASS 11.72s——**无 IP 库正常开局与结算**：
+两客户端+两 AI 真实入房，`结算: 获胜=[AI - Hard] 地图="Crossing Large (10p)"
+回放="…[v1.15] (5 Nov 2026 01.19.31).replay" 时长=8s`，回放文件正常生成。
+
+归零确认：`grep -rn "IPCountry|ip2location|ip2region|net.renfei|ipCountry|IPCount"`
+于 Server-Core/Helper/Go-Server 源码均为空。
