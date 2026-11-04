@@ -1,4 +1,4 @@
-jar:rwhps-iprm:ASM-Framework:unspecified:null
+jar:rwhps-slim3:ASM-Framework:unspecified:null
 jar:org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.1:null
 jar:org.jetbrains.kotlin:kotlin-stdlib:2.0.0:null
 jar:io.netty:netty-codec-http:4.1.108.Final:null
