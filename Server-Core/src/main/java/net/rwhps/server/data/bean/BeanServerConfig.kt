@@ -52,10 +52,9 @@ data class BeanServerConfig(
 
     /** 最大发言长度 */
     val maxMessageLen: Int = 40,
-    /** 最大单位数 */
-    val maxUnit: Int = 200,
-    /** 默认倍率 */
-    val defIncome: Float = 1f,
+
+    // 仓库瘦身阶段二 (2026-11-05): 删除双侧死字段 maxUnit/defIncome
+    // (唯一读取方 Event.kt 已随 relay 前批次删除; Go 侧 0 使用).
 
     val isAfk: Boolean = true,
     val muteAll: Boolean = false,
