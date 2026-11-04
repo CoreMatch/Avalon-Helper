@@ -3,7 +3,7 @@
 日期: 2026-11-04 ～ 2026-11-05 · 基线: `master` @ `b0fbccfa`（第一轮前）
 四轮执行：第一轮 `89dc0d0a`（保守档），第二轮激进档 `0e82df79…a7cddd6c`，
 第三轮 IP 定位整链 `2a096b08…007e1f10`，第四轮方案甲闭包续删 + netty 排除
-`589ce2b6…350a00b2`（本次）。
+`589ce2b6…350a00b2`；其后枢纽手术可执行性试验 `8450dcda`/`a477d340`（见末节）。
 
 仓库现状：上游 Kotlin 只保留一个职责——**给 Go Server 提供游戏内核（Helper）**。
 `Go-Server/` 不引用任何 Kotlin 源码（仅运行时经 `gameHelperPath` 拉起 Helper.jar），两轮瘦身均未改动 Go-Server 一行。
@@ -51,9 +51,9 @@
 
 | 区域 | 钉住它的运行时事实 | 结论 |
 | --- | --- | --- |
-| relay 类簇残余（`RelayRoom`/`GameVersionRelay`/`internal/relay` 等） | `NetStaticData` 是 Kotlin `object`，字段 `relayRoom = RelayRoom(...)` 在对象初始化时即构造；`ServerCommands`（inject 链，运行时加载）经 `NetStaticData.RwHps` 触达。类载日志显示 `GameVersionRelay` 等仍随对象初始化加载 | 删除需重写 `NetStaticData`（运行时对象手术），风险 ≫ 收益，保留。（第四轮已先删其外围零注册的 `Type*` 协议簇 5 文件，见下） |
-| `net/` 其余（NetService/NetStaticData/netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时经 `IRwHpsManage→RwHps→GameVersionPacket` 取用；`GameVersionServer` 用 `NetStaticData.RwHps.abstractNetPacket` | 真实运行时依赖，保留 |
-| `core/Application.kt` + `core/NetServer.kt` | `Data.kt:123` god object 字段 `val core = Application()` 在对象初始化时构造；NetServer 被 Application 引用 | 被 `Data` 钉死，删除需重写 god object（枢纽手术），保留 |
+| relay 类簇残余（`RelayRoom`/`GameVersionRelay`/`internal/relay` 等） | 枢纽试验二（`a477d340`）已把 `relayRoom` 构造改惰性：object 初始化钉解除，E2E 类载日志实证 `NetStaticData`/relay 簇 0 加载（纯占位）。簇内互引与 `GameVersionRelay:306/:432` 触达点仍在 | 运行时障碍已清除，剩余为静态引用面手术（下一轮可删簇，见"枢纽手术可执行性试验"节） |
+| `net/` 其余（NetService/NetStaticData/netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时取 `RwHps`（枢纽试验一后为直接构造，不再经 `IRwHpsManage` 回退）→ `GameVersionPacket`；`GameVersionServer` 用 `NetStaticData.RwHps.abstractNetPacket` | 真实运行时依赖，保留 |
+| `core/Application.kt` + `core/NetServer.kt` | `Data.kt:123` god object 字段 `val core = Application()`。枢纽试验三分析：20 处活读取面（admin/settings/serverHessUuid/http），惰性可行但推迟窗口≈0 且不解锁删除 | 保留；删除 = 重写 20 处读取点 + 替代 Administration/PluginData/HttpRequestManage，属大规模重写，建议阶段二最后做或不做 |
 | `game/`、`io/`、`util/`、`struct/`、`func/` 中未加载部分 | 被上述运行时链与 `Data.kt`（god object）静态引用；同包引用无法静态穷尽 | 保守保留；再删需逐类运行时验证。第四轮闭包后仅剩 6 文件（`FastIntValueClass`/`SyncByteArrayChannel`/`DynamicPrintStream`/`IntSeq`/`SeqSave`/`LongIntMap`），全部位于 ASM 重定向/io/struct 保守区 |
 | `resources`（HZK16/ASC16 字体、libs.zip 等） | 被保留类 `Font16` 与引擎装载链静态引用 | 保留（ip2location.7z 7.5M 已于第三轮删除） |
 
@@ -150,3 +150,66 @@ Go-Server 2.2M 不动。可删的源码部分已从 45.6K 行降到 35.6K 行，
 `GameVersionRelay`/`internal/relay`）、`CustomServerSocket→IRwHpsManage→RwHps→
 GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data/gameData
 全部未动。闭包复跑终态：闭包外仅剩上述 6 个保守区文件。
+
+## 枢纽手术可执行性试验（2026-11-05，决策报告 §C.2 阶段二预研）
+
+三个试验、两条独立分支，纪律：四项硬验证全绿才合并。结果：**两试两过两合并，
+无回滚**；枢纽手术可行，但收益形态与预想不同（解链容易，删文件仍受静态引用面约束）。
+
+### 试验一（已合并）：`CustomServerSocket→IRwHpsManage→RwHps` 回退链 —— **可解开**
+
+- 分支 `exp/hub-trial-1-direct-rwhps`：`8576c0bf` → merge `8450dcda`。
+- 原链路：`CustomServerSocket.run()` → `IRwHpsManage.addIRwHps` → ServiceLoader
+  查 `"ServerProtocol"`（**从无注册**，恒抛 `ImplementedException`）→ 回退 `"IRwHps"`
+  → 反射构造 `RwHps`。异常驱动的确定性回退。
+- 改法：调用点直接构造 `RwHps(classLoader, ServerProtocol)`，经新增
+  `IRwHpsManage.registerIRwHps` 显式注册（同 key），`firstServer`/
+  `NetStaticData.RwHps` 读取面不变，语义等价。
+- 验证：干净克隆 `:Helper:jar` 13.7s（javap 确认新方法入 jar）；go build/vet/test
+  49 包 22.2s 无 FAIL；V2Ext 9.79s；E2E 12.46s `结算: 获胜=[AI - Hard]`。
+- **死文件：0**。`IRwHpsManage` 未失去调用方——`NetStaticData.firstServer`
+  （lazy RwHps 提供者）与 `NetService` mix 分支（`mixProtocolEnable` 默认 false，
+  运行期死、静态活）仍引用。`"IRwHps"→RwHps` 注册同理保留（回退路径静态引用）。
+- 结论：回退链可解开且零风险，但**解链本身不产生可删文件**——收益是为后续
+  手术把"实现类在哪决定"显式化。
+
+### 试验二（已合并）：`NetStaticData` relay 簇 —— **可解，relay 簇实证纯占位**
+
+- 分支 `exp/hub-trial-2-lazy-relayroom`：`7fb71ac2` → merge `a477d340`。
+- 改法：`relayRoom` 从 object 字段即时构造改 `by lazy`（SYNCHRONIZED），保留
+  "每次访问重置 `closeRoom=false`"原语义。代价 = 1 处属性。
+- 验证：干净克隆 `:Helper:jar` 15.2s；go build/vet/test 49 包 20.5s 无 FAIL；
+  V2Ext 8.40s；E2E 12.81s `结算: 获胜=[AI - Hard]`。
+- **运行时证据**（新 jar + `JAVA_TOOL_OPTIONS=-Xlog:class+load` 复跑 E2E，
+  `/tmp/exp2-classlog.log` 5,525 行）：`NetStaticData` **0 加载**（连对象本身都
+  从未初始化）、`RelayRoom`/`GameVersionRelay`/`GroupNet` 0 加载；对照
+  `CustomServerSocket` 4.027s、`RwHps` 0.49s 正常加载。
+- 关键问题回答：**helper 形态下 relay 簇是纯占位**——唯一触达点
+  `GameVersionRelay:306/:432`（relay 协议连接路径），而 relay 已由 Go 侧自实现
+  接管（第四轮批B 删 `Type*` 时证实，`Go-Server/internal/net/netconnectprotocol/
+  typerelay_test.go` 为 Go 自己的实现）。
+- 结论：删 relay 簇**不再需要重写运行时对象**（object 初始化钉已解除）；剩余是
+  静态引用面手术——移除 `relayRoom` 属性与 `GameVersionRelay` 触达点。按纪律
+  本步不删簇。
+
+### 试验三（仅分析，未动代码）：`Data.kt:123 val core = Application()` 惰性化
+
+- 读取面：20 处 / 7 文件——`HelperMain`（settings×4）、`Initialization`
+  （settings/http/exit/save）、`NetPacketRedirections:39`（`serverHessUuid`，
+  ASM 重定向活路径）、inject `ServerCommands`（admin×7）、`GameVersionServer`
+  （`admin.filterMessage`）、`LinkGameNet`（`serverConnectUuid`）、`PlayerManage`
+  （admin×2）。Java 消费方 0（去 `@JvmField` 无碍）。
+- 结论：**惰性技术可行**（1 行：`val core: Application by lazy { Application() }`），
+  但①首次访问发生在启动期（HelperMain/Initialization 读 settings），推迟窗口≈0；
+  ②不解锁删除——`Application` 成员（`admin`/`settings`/`serverHessUuid`/`http`）
+  全是活运行面，删 `Application`/`NetServer` 需重写 20 处读取点并替代
+  `Administration`/`PluginData`/`HttpRequestManage`，属大规模重写而非手术。
+  `NetServer` 唯一触达点为 `Application.exit():84`。
+
+### 阶段二输入（三试汇总）
+
+| 枢纽 | 试验结论 | 下一步手术的实际障碍 |
+| --- | --- | --- |
+| `CustomServerSocket→IRwHpsManage→RwHps` | 已解开（`8450dcda`） | 删 `IRwHpsManage` 需先剪 `NetStaticData.firstServer` 与 `NetService` mix 分支静态引用 |
+| `NetStaticData` relay 簇 | 惰性化通过（`a477d340`），簇纯占位 | 剩静态面：`relayRoom` 属性 + `GameVersionRelay` 触达点 + 簇内互引 |
+| `Data.core`（Application/NetServer） | 惰性可行但收益≈0 | 20 处活读取面，删除=大规模重写，建议最后做或不做 |
