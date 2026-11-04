@@ -24,11 +24,17 @@ object NetStaticData {
     @JvmField
     val groupNet = GroupNet()
 
-    /** Single Room Mode No ID required */
-    val relayRoom = RelayRoom("RW-HPS Beta Relay", groupNet)
+    /** Single Room Mode No ID required
+     *
+     * 枢纽手术试验二 (2026-11-05): 构造从 object 初始化 (字段即时构造) 改为
+     * 惰性 —— NetStaticData 类加载不再钉住 RelayRoom 簇. 保留原语义:
+     * 每次访问重置 closeRoom=false; by lazy 默认 SYNCHRONIZED 线程安全.
+     */
+    private val relayRoomInstance: RelayRoom by lazy { RelayRoom("RW-HPS Beta Relay", groupNet) }
+    val relayRoom: RelayRoom
         get() {
-            field.closeRoom = false
-            return field
+            relayRoomInstance.closeRoom = false
+            return relayRoomInstance
         }
 
     @JvmField
