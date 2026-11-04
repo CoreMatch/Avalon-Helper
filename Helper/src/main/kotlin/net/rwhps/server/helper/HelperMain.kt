@@ -179,7 +179,7 @@ fun main(args: Array<String>) {
     // 表不能为 null). 不走 PluginManage.init: 它会初始化 GraalVM JS 插件上下文
     // (compileOnly 依赖, 不打进 fat jar); 直接反射写空表.
     // 服务注册表装载 (对应上游 Initialization.loadService,
-    // CustomServerSocket 经 ServiceLoader 取 IRwHps 需要它).
+    // GameVersionPacket/PacketType 注册供 RwHps 协议链取用).
     run {
         val f = net.rwhps.server.util.file.plugin.PluginManage.javaClass.getDeclaredField("pluginData")
         f.isAccessible = true

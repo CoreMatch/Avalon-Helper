@@ -86,3 +86,6 @@ android/libs/
 
 
 cmd.exe
+
+# buildSrc makeDependTree 构建期自动重写, 无运行时读取方 (LibraryManager 已删)
+**/src/main/resources/maven/*/*.txt
