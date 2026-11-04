@@ -108,7 +108,7 @@ fun Project.configureDokka() {
         if (isRoot) {
             tasks.named<AbstractDokkaTask>("dokkaHtmlMultiModule").configure {
                 outputDirectory.set(
-                        rootProject.projectDir.resolve("Java-Doc/pages/snapshot")
+                        rootProject.layout.buildDirectory.dir("dokka").get().asFile
                 )
             }
         }
