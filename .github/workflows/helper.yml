@@ -1,0 +1,35 @@
+name: Helper CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# 仓库瘦身 (2026-11-05): 取代已删的 Server-All workflow.
+# 本仓库唯一的发行物是 Go 服务端的外部游戏内核 helper (JDK 17).
+# 本地等价命令:
+#   ./gradlew :Helper:jar -Dorg.gradle.java.home=/path/to/jdk-17
+#   产物: Helper/build/libs/Helper.jar
+jobs:
+  build_helper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Helper.jar
+        run: |
+          chmod +x gradlew
+          ./gradlew :Helper:jar --console=plain
+
+      - name: Upload Helper.jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: Helper-jar
+          path: Helper/build/libs/Helper.jar
