@@ -1,148 +1,82 @@
 <div align="center">
-<h1>RW-HPS Project</h1>
+<h1>RW-HPS Project Unofficial</h1>
 
-----
-![](https://img.shields.io/github/stars/RW-HPS/RW-HPS.svg)
-![](https://github.com/RW-HPS/RW-HPS/actions/workflows/gradle.yml/badge.svg?branch=master)
-![](https://jitpack.io/v/RW-HPS/RW-HPS.svg)
-![](https://app.fossa.com/api/projects/git%2Bgithub.com%2FRW-HPS%2FRW-HPS.svg?type=shield)
+这是一个非官方仓库。由于原仓库已被删除，因此这是一个备份。
 
-[English version / 英文介绍](README.md) **or** [Chinese version / 中文介绍](README-CN.md)  
+**RW-HPS** 是一个 **Rusted Warfare**（铁锈战争）游戏服务端（目标客户端 **1.15** / 协议号 **176**）
 
-**RW-HPS** 是一个 **Rusted Warfare** 游戏的服务端  
-用于在运行 Java21 的服务器上快速建立高性能游戏服务器  
-旨在作为一个高性能, 高可用的服务器 为玩家提供和官方服务器一样的游戏体验
-
-_**个人项目, 仅供学习**_
+_**个人项目，仅供学习**_
 </div>
+
+[English version / 英文介绍](README.md) **或** [Chinese version / 中文介绍](README-CN.md)
+
+## 当前形态
+
+运行时主体是 **Go**；Java/Kotlin 侧只承担"承载闭源游戏引擎的壳"。
+共 4 个模块（另有 `buildSrc` 为 Gradle 构建工具，不算产品模块）：
+
+| 模块 | 语言 | 职责 |
+| --- | --- | --- |
+| `Go-Server/` | Go | **运行时主体**：网关、房间、玩家与协议处理、控制台、HTTP API、Cascade 对接 |
+| `Helper/` | Kotlin | 引擎壳：把上游 headless 内核封装为独立 Java 进程，经 stdin/stdout 线协议（v2 / v2-ext）接受 Go 侧驱动 |
+| `Server-Core/` | Java/Kotlin | 上游服务端实体与引擎装载链（在 helper 的 JVM 内被加载） |
+| `ASM-Framework/` | Kotlin | 字节码改写框架，装载期修补闭源引擎 |
+
+Go 无法执行 Java 字节码，因此游戏模拟内核外置为 helper 进程；两者经
+`Go-Server/docs/HELPER-PROTOCOL.md` 定义的线协议解耦。不配置 helper 时
+Go 服务端仍可完整启动（控制台/HTTP/房间管理），只是无法真实开局。
+细节见 [`Go-Server/README.md`](Go-Server/README.md)。
+
+## 构建
+
+- **Go 1.22+**（Go 主体）
+- **JDK 17**（构建引擎壳；引擎与 Kotlin 运行时按 JDK 17 验证）
+
+```bash
+# 1. 引擎壳 (产物 Helper/build/libs/Helper.jar)
+JAVA_HOME=<jdk17> ./gradlew :Helper:jar
+
+# 2. Go 主体 (产物 Go-Server/rwhps)
+cd Go-Server
+go build -o rwhps ./cmd/rwhps
+```
+
+提交前校验（必须全绿）：
+
+```bash
+cd Go-Server
+go build ./...
+go vet ./...
+go test ./... -count=1    # 含真实 helper 集成测试 (自动发现 Helper.jar 与 JDK 17, 缺失则跳过)
+```
+
+## 运行
+
+推荐分发包形态（干净目录自足，不依赖仓库环境）：
+
+```bash
+./dist/build-dist.sh      # 产出 dist/out/rwhps-<hash>-linux-<arch>.tar.gz
+```
+
+包内容、启动步骤、配置键与升级方式见 [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md)。
+
+运行要求：Linux + **JRE/JDK 17** 的 `java` 在 `PATH` 中（或在配置里显式指定
+`javaPath`）。首次启动有 EULA 确认，随后自动加载游戏内核并监听配置端口
+（默认 5123）。
+
+## 文档
+
+- [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) —— 分发包内容与升级方式
+- [`Go-Server/docs/HELPER-PROTOCOL.md`](Go-Server/docs/HELPER-PROTOCOL.md) —— Go ↔ helper 线协议（v2 / v2-ext）
+- [`docs/REPO-SLIM.md`](docs/REPO-SLIM.md) —— 仓库瘦身记录与"当前不可再删项"护栏
+- [`docs/BASELINE.md`](docs/BASELINE.md) —— 回归基线（E2E / 启动 / 内存 / 类数）
 
 ## 声明
 
-### 一切开发旨在学习，请勿用于非法用途
-
-- RW-HPS 是完全免费且开放源代码的软件，仅供学习和娱乐用途使用
-- RW-HPS 不会通过任何方式强制收取费用，或对使用者提出物质条件
-
-`RW-HPS` 采用 `AGPLv3` 协议开源。为了整个社区的良性发展，我们**强烈建议**您做到以下几点：
-
-- **间接接触（包括但不限于使用 `Http API` 或 跨进程技术 以及字节码修改）到 `RW-HPS` 的软件使用 `AGPLv3` 开源**
-- **不鼓励，不支持一切商业使用**
-
-**鉴于项目的特殊性，开发团队可能在任何时间停止更新或删除项目。**
-
-### 衍生软件需声明引用
-
-- 若引用 RW-HPS 发布的软件包而不修改 RW-HPS，则衍生项目需在描述的任意部位提及使用 RW-HPS。
-- 若修改 RW-HPS 源代码再发布，**或参考 RW-HPS 内部实现发布另一个项目**，则衍生项目必须在**文章首部**或 'RW-HPS' 相关内容**首次出现**的位置*
-  *明确声明**来源于本仓库 (`https://github.com/RW-HPS/RW-HPS`) 不得扭曲或隐藏免费且开源的事实。
-
-### 不会支持的游戏协议
-
-- 金钱相关，如增值服务
-
-## 开始
-- 讨论:
-  > 在 GitHub Discussions 提出的问题会收到回复, 也欢迎分享你基于项目的新想法  
-  > 邮件联系: dr@der.kim  
-  > 腾讯QQ群: [980562548](https://qm.qq.com/cgi-bin/qm/qr?k=mxR_X-QsuLG6PeVaJspPqUOS_iWL02nx&jump_from=webapi&authKey=WSxLsF8GcHdYB3VIrOxNnprRSQBBlklBww6AF420KTmhcow3jYLQKEF3z3Qy+Vfx)
-
-### 我们被谁使用
-
-- Tiexiu.xyz
-    - [简幻欢](https://sfe.simpfun.cn)
-- 非官方RELAY
-    - **RelayCN-Unofficial IP** - [SimpFun Cloud](https://cloud.simpfun.cn) : relaya.der.kim
-    - **RelayRU-Unofficial IP** - `Vulkan (RMT)`: vulkan.host
-
-## 运行配置
-
-#### 不支持使用的系统 :
-
-+ Windows ARM
-+ Windows LoongArch (龙芯)
-
-**如果在 Windows 无法运行, 试试 Linux 可能有奇效**
-
-#### 标准
-
-| 配置 		  | CPU                     | 内存 	  | 系统 			 | 硬盘大小 	    | Java    |
-|:-------|:------------------------|:------|:-------|:----------|:--------|
-| 推荐配置 	    | AMD 3990X | 4G | Linux      | 1G SSD | Java 21 (Azul JDK)      |
-| 最低配置 	        | E5-2695 V2 (4C +)  | 1G  | Linux      | 512M SSD | Java 21 (Azul JDK)      |
-| 测试环境 	        | i7-13700HX          | 32G  | Windows      | 2T SSD | Java 21 (Azul JDK)    |
-
-## 版本合集
-不提供, 自行编译
-
-## 赞助
-
-RW-HPS是AGPL v3授权的开放源码项目，完全免费使用。然而，如果没有适当的资金支持，为项目维护和开发新功能所需的工作量是不可持续的。  
-请注意，赞助是全自愿的。赞助者不会获得特权，不赞助也可以使用全部的功能。
-
-我们通过以下渠道接受捐赠：
-
-+ [爱发电](https://afdian.net/@derdct)
-+ [EN - Ko-Fi](https://ko-fi.com/derdct)
-
-## 感谢
-
-> [IntelliJ IDEA](https://zh.wikipedia.org/zh-hans/IntelliJ_IDEA) 是一个在各个方面都最大程度地提高开发人员的生产力的 IDE，适用于 JVM 平台语言。
-
-特别感谢 [JetBrains](https://www.jetbrains.com/?from=rw-hps)
-为开源项目提供免费的 [IntelliJ IDEA](https://www.jetbrains.com/idea/?from=rw-hps) 等 IDE 的授权  
-[<img src=".github/jetbrains-variant-3.png" width="200"/>](https://www.jetbrains.com/?from=rw-hps)
-
-## Stargazers over time
-
-[![Stargazers over time](https://starchart.cc/RW-HPS/RW-HPS.svg)](https://starchart.cc/RW-HPS/RW-HPS)
+- RW-HPS 是免费开源项目，仅供学习用途，请勿用于任何非法用途。
+- 一切开发旨在学习，请勿用于非法用途。
 
 ## 许可证
 
-<details>
-  <summary><a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a></summary>
-
-```
-Copyright (C) 2020-2022 RW-HPS Team and contributors.
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-```
-
-</details>
-
-
-
-<details>
-  <summary><a href="https://github.com/RW-HPS/RW-HPS/blob/master/Server/src/main/resources/eula/China.md">EULA</a></summary>
-
-```
-版权所有©2022 Dr <RW-HPS@der.kim>
-
-允许在其遵守CC BY-NC-SA 4.0协议的同时，每个人复制和分发此许可证文档的逐字记录副本，且允许对其进行更改，但必须保留其版权信息与原作者。
-
-请务必仔细阅读和理解通用用户协议书中规定的所有权利和限制。在使用前，您需要仔细阅读并决定接受或不接受本协议的条款。除非或直至您接受本协议的条款，否则本软件及其相关副本、相关程序代码或相关资源不得在您的任何终端上下载、安装或使用。
-
-您一旦下载、使用本软件及其相关副本、相关程序代码或相关资源，即表示您同意接受本协议各项条款的约束。如您不同意本协议中的条款，您则应当立即删除本软件、附属资源及其相关源代码。
-
-本软件权利只许可使用，而不出售。
-
-本协议与GNU Affero通用公共许可证(即AGPL协议)共同作为本软件与您的协议，且本协议与AGPL协议的冲突部分均按照本协议约束。您必须同时同意并遵守本协议与AGPL协议，否则，您应立即卸载、删除本软件、附属资源及其相关源代码。
-```
-
-</details>
-
-<details>
-  <summary>FOSSA Status</summary>
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FRW-HPS%2FRW-HPS.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FRW-HPS%2FRW-HPS?ref=badge_large)
-</details>
+[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)（见 [`LICENSE`](LICENSE)），
+并沿用原项目 EULA（CC BY-NC-SA 4.0，非商业使用）。
