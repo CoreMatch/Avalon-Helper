@@ -352,3 +352,52 @@ Helper.jar 25,263,098 → **23,307,355**（−1,955,743 B，JNA 移除为主）�
 
 **阶段二至此全部收官**（①②③⑤ 完成，④ 评估后不做）。剩余体积为
 gameData 9.7M + 闭源引擎 4.2M + libs.zip 6.4M + 必要依赖，均在保留红线内。
+
+## 当前不可再删项与理由（护栏，2026-11-05 稳定壳收尾）
+
+本节是**结论性护栏**：以下各项都已被本轮"稳定壳收尾"的真实运行链路
+（干净目录分发实跑、E2E 矩阵、真实 helper 集成测试）钉死。后人若想再删，
+先回答"删后这条链路由谁承载"，否则不要动手——前六轮已反复验证过这些边界。
+
+### 运行时实体（删了直接跑不起来）
+
+| 项 | 钉死它的运行事实 |
+| --- | --- |
+| `data/gameData/`（≈12M，含 7z 资源） | 引擎开局必需；分发自足性测试（`TestDistributionSelfContained`）与干净目录实跑都以它为数据根，缺失则引擎无法装载地图/资源 |
+| `Server-Core/libs/*.jar`（4.2M，含闭源 game-lib.jar） | 闭源引擎本体，无源码、不可重建，helper 的唯一"货物" |
+| `Server-Core/src/main/resources`（libs.zip 6.4M + HZK16/ASC16 字体 + bundles） | libs.zip 是引擎装载源（`GameModularReusableLoadClass` 按包前缀复制装载）；字体被保留类 `Font16` 静态引用 |
+| `dependent/redirections/**` + `plugin/internal/headless/**` | ASM 注入/重定向链。实例：`GameMainRedirections` 的 "Recording replay to:" 钩子是 `room.replayFileName` 的**唯一**写入点（本轮 E2E 竞态定位实证：结算的 `replayName` 就靠它异步落定） |
+| `com/corrodinggames/**` 引擎桥接补丁 | 被 `GoBridge`/`LinkGameNet` 等直接引用 |
+| `net/` 残余（NetService / NetStaticData / netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时直接构造 `RwHps` 并直赋 `NetStaticData.RwHps` |
+| `core/Application.kt` + `core/NetServer.kt` | `Data.kt:123` god object 字段 `val core = Application()`，20 处活读取面；删除 = 大规模重写（枢纽试验三结论） |
+| kotlinx-coroutines / okhttp3 | 第六轮 ⑤ 逐一查证：两库均活，保留 |
+
+### 闭包外保守区（8 文件，别再零敲碎打）
+
+`FastIntValueClass`（ASM 重定向目标）、`SyncByteArrayChannel` /
+`DynamicPrintStream`（io）、`IntSeq` / `SeqSave` / `LongIntMap` / `IntMap` /
+`ObjectIntMap`（struct 容器）。它们位于保留类的静态引用面或同包引用面内，
+静态分析无法穷尽；再删**必须逐类做运行时类载验证**，单靠闭包扫描不够
+（第五轮复扫已确认闭包外只剩这 8 个，全部按区纪律保留）。
+
+### 本轮新增的钉死项（稳定壳收尾）
+
+| 项 | 钉死它的运行事实 |
+| --- | --- |
+| `Go-Server/internal/resource/assets/bundles/HPS_*.properties`（4 语言包） | 控制台命令注册逐键依赖；`TestI18NBundleLoad` 钉死键数基线（当前 **205**，含本轮新增 `serverCommands.addai`） |
+| 控制台 `addai` 命令（Go 侧 `servercommands.go`） | 无头分发形态的唯一 AI 驱动入口；分发自足性测试与干净目录实跑都靠它开局 |
+| `bootstrap.go` 的 CloseServerHook 配置回写 | helper 退出时 Java 侧按 Bean 字段集整文件重写配置，Go 不最后写回就丢 `gameHelperPath`（本轮修复并经 dist 测试断言） |
+| `dist/`（build-dist.sh / start.sh / 默认 Config*.json） | 分发形态入口；`docs/DISTRIBUTION.md` 是配套合同 |
+| `docs/DISTRIBUTION.md` / `docs/BASELINE.md` | 分发合同与回归基线本身 |
+
+### 方法论护栏
+
+任何后续删除提案，**先过四项硬验证再谈合并**：
+
+1. 干净克隆（`git clone` 本仓库）构建：`JAVA_HOME=<jdk17> ./gradlew :Helper:jar`；
+2. `go build ./... && go vet ./...`；
+3. `go test ./... -count=1` 全绿（含真实 helper 集成与分发自足性测试）；
+4. 分发包干净目录实跑：启动 → 开局 → 结算 → 优雅退出。
+
+"整体重跑一次就绿了"不算通过——失败必须定位到具体环节（本轮
+`ReplayName` 竞态即按此纪律定位到引擎回放保存的异步钩子并修复测试）。
