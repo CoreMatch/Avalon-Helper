@@ -9,7 +9,6 @@
 
 package net.rwhps.server.data.global
 
-import net.rwhps.server.game.manage.IRwHpsManage
 import net.rwhps.server.net.NetService
 import net.rwhps.server.net.core.IRwHps
 import net.rwhps.server.net.netconnectprotocol.FakeRwHps
@@ -25,18 +24,14 @@ object NetStaticData {
     @JvmField
     var netService = Seq<NetService>(4)
 
-    val RwHps: IRwHps by lazy {
-        IRwHpsManage.firstServer ?:FakeRwHps(this::class.java.classLoader, IRwHps.NetType.NullProtocol)
-    }
-
-    @JvmStatic
-    fun checkServerStartNet(run: (() -> Unit)?): Boolean {
-        if (this::RwHps is FakeRwHps) {
-            return false
-        }
-        run?.let { it() }
-        return true
-    }
+    /**
+     * 运行期协议实例. 枢纽手术 (2026-11-05): 原为 lazy 查 IRwHpsManage.firstServer,
+     * relay 簇与 NetService mix 分支删除后提供者唯一 (CustomServerSocket 引擎启动时
+     * 直接赋值), 注册表整体移除. 默认 FakeRwHps 保持原"未就绪"兜底语义.
+     */
+    @JvmField
+    @Volatile
+    var RwHps: IRwHps = FakeRwHps(this::class.java.classLoader, IRwHps.NetType.NullProtocol)
 
     @JvmStatic
     fun checkProtocolIsServer(serverNetType: IRwHps.NetType): Boolean {

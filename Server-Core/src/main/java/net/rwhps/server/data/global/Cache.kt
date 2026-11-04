@@ -11,7 +11,6 @@ package net.rwhps.server.data.global
 
 import net.rwhps.server.data.totalizer.TimeAndNumber
 import net.rwhps.server.io.packet.Packet
-import net.rwhps.server.net.core.IRwHps
 import net.rwhps.server.struct.map.LongMap
 import net.rwhps.server.struct.map.ObjectMap
 
@@ -19,6 +18,5 @@ import net.rwhps.server.struct.map.ObjectMap
  * @author Dr (dr@der.kim)
  */
 object Cache {
-    val iRwHpsCache: ObjectMap<String, IRwHps> = ObjectMap(4)
     val packetCache: ObjectMap<String, Packet> = ObjectMap(8)
 }
