@@ -65,7 +65,6 @@ subprojects {
     afterEvaluate {
         if (
             project.path == ":ASM-Framework" ||
-            project.path == ":TimeTaskQuartz" ||
             project.path == ":Server-Core"
             ) {
             configureDokka()

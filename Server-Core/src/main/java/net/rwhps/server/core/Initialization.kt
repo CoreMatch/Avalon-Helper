@@ -15,7 +15,6 @@ import net.rwhps.server.core.thread.CallTimeTask
 import net.rwhps.server.core.thread.Threads
 import net.rwhps.server.data.global.Data
 import net.rwhps.server.data.global.Data.serverCountry
-import net.rwhps.server.dependent.LibraryManager
 import net.rwhps.server.game.manage.HeadlessModuleManage
 import net.rwhps.server.io.packet.type.PacketType
 import net.rwhps.server.net.NetService
@@ -149,41 +148,6 @@ class Initialization {
             }
 
             pluginData.save()
-        }
-
-        internal fun loadLib() {
-            val libraryManager = LibraryManager()
-
-            val excludeImport: (String) -> Unit = {
-                val libData = it.split(":")
-                if (libData[0] == "jar") {
-                    libraryManager.implementation(libData[1], libData[2], libData[3], libData[4].let { classifier -> if (classifier == "null") "" else classifier })
-                }
-            }
-            FileUtils.getInternalFileStream("/maven/ASM-Framework/compileOnly.txt").readFileListString().eachAll(excludeImport)
-            FileUtils.getInternalFileStream("/maven/Server-Core/compileOnly.txt").readFileListString().eachAll(excludeImport)
-            FileUtils.getInternalFileStream("/maven/TimeTaskQuartz/compileOnly.txt").readFileListString().eachAll(excludeImport)
-
-
-            val libImport: (String) -> Unit = {
-                val libData = it.split(":")
-                if (libData[0] == "jar") {
-                    libraryManager.exclude(libData[1], libData[2], libData[3], libData[4].let { classifier -> if (classifier == "null") "" else classifier })
-                }
-            }
-            FileUtils.getInternalFileStream("/maven/Server-Core/implementation.txt").readFileListString().eachAll { libImport(it) }
-            FileUtils.getInternalFileStream("/maven/ASM-Framework/implementation.txt").readFileListString().eachAll(libImport)
-            FileUtils.getInternalFileStream("/maven/Server-Core/implementation.txt").readFileListString().eachAll(libImport)
-            FileUtils.getInternalFileStream("/maven/TimeTaskQuartz/implementation.txt").readFileListString().eachAll(libImport)
-
-            libraryManager.loadToClassLoader()
-
-            loadPrivateLib()
-        }
-
-        private fun loadPrivateLib() {
-            //val fileUtils = FileUtils.getFolder(Data.ServerPluginsPath).toFile("RW-HPS-JSLib.zip")
-            // TODO: 加载JS-Lib
         }
 
         internal fun loadService() {
