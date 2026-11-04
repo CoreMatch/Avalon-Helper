@@ -10,7 +10,6 @@
 package net.rwhps.server.data.bean
 
 import net.rwhps.server.data.global.Data
-import net.rwhps.server.util.SystemUtils
 import net.rwhps.server.util.file.FileUtils
 import net.rwhps.server.util.inline.toGson
 import net.rwhps.server.util.math.RandomUtils
@@ -23,43 +22,33 @@ import net.rwhps.server.util.math.RandomUtils
  * @author Dr (dr@der.kim)
  */
 data class BeanCoreConfig(
-    val noteEnglish: String = """
-        Different protocols use different configuration files, please go to the corresponding file ConfigServer/ConfigRelay
-    """.trimIndent(), val noteChina: String = """
-        不同协议使用的配置文件不同, 请自行前往对应文件 ConfigServer/ConfigRelay
-    """.trimIndent(),
-
-    /** Default startup command */
+    /** Default startup command (Go 侧读取, 保留) */
     val defStartCommand: String = "start",
 
     val log: String = "WARN",
 
-    val cmdTitle: String = "",
-
-    /** 更新是否使用测试版本 */
-    val followBetaVersion: Boolean = false,
-
     /** Port */
     val port: Int = 5123,
 
-    /** 服务器名称 */
+    /** 服务器名称 (Go 侧读取, 保留) */
     val serverName: String = "RW-HPS",
-    /** 标题, 留空使用地图名 */
+    /** 标题, 留空使用地图名 (Go 侧读取, 保留) */
     val subtitle: String = "",
     /** Automatically after starting UPLIST */
     val autoUpList: Boolean = false,
 
-    /** Single user relay disable pop-up selection */
-    val singleUserRelay: Boolean = false,
-    /** Default mods configuration for single user relay */
-    val singleUserRelayMod: Boolean = false,
+    // 仓库瘦身阶段二 (2026-11-05): 删除双侧 (Kotlin 0 解引用 + Go 0 使用)
+    // 死字段 —— noteEnglish/noteChina/cmdTitle/followBetaVersion/
+    // singleUserRelay/singleUserRelayMod/rconPort/runPid.
+    // Go 侧仍读的键 (defStartCommand/serverName/subtitle/autoUpList/
+    // mixProtocolEnable/rconMixEnable/webMixEnable/webPort/webToken 等)
+    // 必须保留: Java save() 重写 Config.json 时不能丢键.
 
     /** 混合协议监听, 会使用 [BeanCoreConfig.port] 作为HTTP/HTTPS/R-Con/Game, 支持SSL */
     val mixProtocolEnable: Boolean = false,
     val rconMixEnable: Boolean = false,
     val webMixEnable: Boolean = false,
 
-    val rconPort: Int = 0,
     val rconPasswd: String = RandomUtils.getRandomIetterString(10),
 
     /** Web的 Port, 不为 0 时在对应端口启用一个HTTP服务 */
@@ -73,17 +62,10 @@ data class BeanCoreConfig(
     /** 混合协议, 允许在启用SSL的情况下, 同端口服务HTTP */
     val sslMixEnable: Boolean = false,
     /** SSL密码 */
-    val sslPasswd: String = "RW-HPS",
-
-    var runPid: Long = 0
+    val sslPasswd: String = "RW-HPS"
 ): AbstractBeanConfig(
         this::class.java, "rwhps.config.core"
 ) {
-    override fun save() {
-        runPid = SystemUtils.pid
-        super.save()
-    }
-
     companion object {
         val fileUtils = FileUtils.getFolder(Data.ServerDataPath).toFile("Config.json")
 

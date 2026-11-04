@@ -1,10 +1,12 @@
 # REPO-SLIM: 以 Helper 编译/运行闭包为判据的仓库瘦身（最终版）
 
 日期: 2026-11-04 ～ 2026-11-05 · 基线: `master` @ `b0fbccfa`（第一轮前）
-五轮执行：第一轮 `89dc0d0a`（保守档），第二轮激进档 `0e82df79…a7cddd6c`，
+六轮执行：第一轮 `89dc0d0a`（保守档），第二轮激进档 `0e82df79…a7cddd6c`，
 第三轮 IP 定位整链 `2a096b08…007e1f10`，第四轮方案甲闭包续删 + netty 排除
 `589ce2b6…350a00b2`，枢纽手术试验 `8450dcda`/`a477d340`，
-第五轮 relay 簇删除 + 枢纽收窄 `81bbc009…b8815069`（本次）。
+第五轮 relay 簇删除 + 枢纽收窄 `81bbc009…b8815069`，
+第六轮阶段二收官（Initialization 精简 + 依赖处置 + 机械项）
+`8f0e16ef…1f61920a`（本次）。
 
 仓库现状：上游 Kotlin 只保留一个职责——**给 Go Server 提供游戏内核（Helper）**。
 `Go-Server/` 不引用任何 Kotlin 源码（仅运行时经 `gameHelperPath` 拉起 Helper.jar），两轮瘦身均未改动 Go-Server 一行。
@@ -60,13 +62,13 @@
 
 ## 最终体积对比
 
-| 指标 | 原始 `b0fbccfa` | 第一轮后 `89dc0d0a` | 第三轮后 `ed92ff0f` | 第四轮后 `5c660dd3` | 最终（第五轮） | 变化（累计） |
-| --- | --- | --- | --- | --- | --- | --- |
-| `git archive` 字节 | 33,546,240 | 33,495,040 | 25,344,000 | 25,180,160 | **25,067,520** | **−8,478,720 B（−25.3%）** |
-| Kt/Java 行数 | 45,599 | 45,028 | 38,847 | 35,628 | **32,972** | **−12,627 行（−27.7%）** |
-| Kt/Java 文件数 | 521 | 509 | 446 | 396 | **382** | **−139 个（−26.7%）** |
-| Helper.jar 产物 | —（无此产物） | — | 28,665,640 | 25,338,175 | **25,263,097** | **−3,402,543 B（−11.9%）** |
-| Gradle 模块 | 6 | 5 | 4 | 4 | **4**（Helper/Server-Core/ASM-Framework/buildSrc 工具） | −2（Server-All、Java-Doc、UPList、TimeTaskQuartz 除名） |
+| 指标 | 原始 `b0fbccfa` | 第一轮后 `89dc0d0a` | 第三轮后 `ed92ff0f` | 第四轮后 `5c660dd3` | 第五轮后 `baabca44` | 最终（第六轮） | 变化（累计） |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `git archive` 字节 | 33,546,240 | 33,495,040 | 25,344,000 | 25,180,160 | 25,077,760 | **25,036,800** | **−8,509,440 B（−25.4%）** |
+| Kt/Java 行数 | 45,599 | 45,028 | 38,847 | 35,628 | 32,972 | **32,666** | **−12,933 行（−28.4%）** |
+| Kt/Java 文件数 | 521 | 509 | 446 | 396 | 382 | **380** | **−141 个（−27.1%）** |
+| Helper.jar 产物 | —（无此产物） | — | 28,665,640 | 25,338,175 | 25,263,098 | **23,307,355** | **−5,358,285 B（−18.7%）** |
+| Gradle 模块 | 6 | 5 | 4 | 4 | 4 | **4**（Helper/Server-Core/ASM-Framework/buildSrc 工具） | −2（Server-All、Java-Doc、UPList、TimeTaskQuartz 除名） |
 
 **剩余体积构成**（字节数变化小的原因）：`data/gameData` 9.7M（helper 运行必需）、
 `Server-Core/libs` 4.2M（闭源引擎 jar）、`Server-Core/src/main/resources` ≈6.6M
@@ -251,3 +253,102 @@ Helper.jar 25,338,175 → **25,263,097**（−75,078 B）。
 
 **阶段二进度**：§C.2 ①②已完成（含删除落地）；剩余 ③`Initialization` 精简、
 ⑤kotlinx-coroutines/okhttp3 处置、④`Data` 裁剪（建议最后或不做）。
+
+## 第六轮（2026-11-05）：阶段二收官——Initialization 精简 + 依赖处置 + 机械项
+
+### 批1 `8f0e16ef`：③ Initialization 精简 + JNA 依赖移除（−575 行，jar −1.95M）
+
+逐 init 步骤核对，只删类载/静态证明不执行的：
+
+| 步骤 | 处置 | 证据 |
+| --- | --- | --- |
+| `checkEnvironment`（JNA 架构警告） | 删 | 全树唯一 JNA 触达点；删后类载日志 `com.sun.jna` 0 加载（原 44 条） |
+| `initRsa`（调用点上游即注释） | 删，级联删 `util/algorithms/Rsa.kt`（135 行） | 零调用 |
+| `startInit`/`initServerLanguage`/`eula` | 删，级联删 `PrintEx.kt`（52 行）与 `/eula/Main-*.md`×2 | helper 由 `HelperMain:167-173` 直接落位 settings（serverCountry=EN/eulaVersion/initStart=false），三方法全树零调用 |
+| 9 个失效 import | 清理 | CallTimeTask/Threads/HeadlessModuleManage/NetService 等 |
+| `loadLang`/`loadService`/shutdown hook | **保留** | 启动顺序依赖（i18n → 协议注册）与退出保存 |
+
+构建：移除 `net.java.dev.jna:jna` 与 `org.jline:jline-terminal-jna` 依赖
+（jar 内 jna 181 条目 / 压缩 1.84M 归零）。`jline-reader`/`jline-terminal`
+保留：`Data.kt:164 privateReader: LineReader` 编译期钉住（god object 边界；
+运行期 org.jline 0 加载）。**jar 25,263,098 → 23,309,069（−1,954,028 B）**。
+验证：49 包 21.0s 无 FAIL；V2Ext 8.60s；E2E 11.76s 结算；类载交叉
+com.sun.jna/Rsa/PrintEx 全 0，Initialization 正常加载。
+
+### ⑤ kotlinx-coroutines / okhttp3 处置：**两库均活，保留**
+
+`-Xlog:class+load` 实测（E2E 全程）：okhttp3 **69** 次加载、
+kotlinx.coroutines **104** 次加载。具体路径：
+
+| 库 | 加载源 | 结论 |
+| --- | --- | --- |
+| okhttp3（0.140s 起） | `Application.http = HttpRequestManage()` 与 `rwHttp`（`Data.core` 字段，启动即构造）；`DownloadManage`（`GameStartInit:60` 引擎资源下载）；`MyOkHttpRetryInterceptor` | 活路径，保留（`Server-Core/build.gradle.kts:43`） |
+| kotlinx-coroutines（0.412s 起） | `AbstractEventManage.eventData = Events()`——事件核心，`Events.eventMonitorScope = CoroutineScope(SupervisorJob()+Dispatchers.Default)`；`AbstractFuture`/`EventFuture` 的 `.await()` 链（`runGlobalEventManage(...).await()`，连接关闭事件等） | 活路径，保留（`Server-Core/build.gradle.kts:15` api） |
+
+`implementation.txt` 已于第五轮删除（无读取方），无需同步。
+
+### ④ Data 裁剪：**已评估、本阶段不做**
+
+试验三判定：`Data.core` 惰性化技术可行但收益≈0（20 处活读取面，首次访问
+在启动期）。删除 `Application`/`NetServer` 需重写 20 处读取点并替换
+`Administration`/`PluginData`/`HttpRequestManage` 三套活组件——属大规模重写
+而非手术，若将来要做以前述三项替代为先决条件。
+
+### 批2 `9c577701`：阶段三-2 配置面复盘（−10 死字段）
+
+逐字段双侧审计（**Kotlin 0 解引用 且 Go-Server 0 使用才删**——Java `save()`
+会重写 Config.json/ConfigServer.json，Go 仍读的键不能丢）：
+
+- `BeanCoreConfig` 删 8：`noteEnglish`/`noteChina`/`cmdTitle`/
+  `followBetaVersion`/`singleUserRelay`/`singleUserRelayMod`/`rconPort`/
+  `runPid`（只写无读，连带删 `save()` 覆写）；
+- `BeanServerConfig` 删 2：`maxUnit`/`defIncome`（唯一读取方 `Event.kt`
+  已随 relay 前批删除，Go 侧 0 使用）；
+- 保留：Go 侧仍读的键（`serverName`/`subtitle`/`defStartCommand`/
+  `autoUpList`/`mixProtocolEnable`/`webToken` 等，虽 Kotlin 不读）；
+- `BeanRelayConfig`：5 字段全死，但 Bean 本体被 `Data.configRelay`
+  （god object 边界）+ `HelperMain:165` 初始化 + `Administration:70` 保存
+  钉住，整体保留。
+
+验证：49 包 17.1s 无 FAIL；V2Ext 8.80s；E2E 12.01s 结算。
+
+### 批3 `1f61920a`：阶段三-3 异常路径确认 + 补测试
+
+新增 `TestRealHelperRobustness`（直接拉起真实 Helper.jar 注入原始行）：
+畸形帧（非 JSON 垃圾/截断 JSON/空行）全吞不崩；未知 op 返回
+`ok:false unsupported`；缺字段帧缺省处理；**异常注入后 hello/room.status
+仍正常**（JVM 未崩、主循环未死）；突然关闭 stdin（模拟 Go 断连）helper
+感知 EOF 干净退出（`exitProcess(0)`），30s 时限内无挂死。PASS 3.22s。
+防护机制：`HelperMain` dispatch try/catch（`HelperMain.kt:240-245`）+
+`readLine() ?: break` EOF 退出。Go 侧异常面已有测试覆盖
+（`backend_test.go`: HandshakeFailure/UnmatchedResponseIDIsIgnored/
+UnknownEventIsIgnored 等）。验证：49 包 17.9s 无 FAIL；V2Ext 9.69s；
+E2E 11.54s 结算。
+
+### 阶段三-1：启动时间/内存/类数基线对照（各 3 次均值）
+
+测量法：独立进程拉起真实 jar（`-Xmx512m` + `-Xlog:class+load`），
+`boot_done` = 进程启动 → `[Helper] boot done`（协议循环就绪）；
+`engine_socket` = → `CustomServerSocket` 类载（引擎网络就绪，约等于
+可接收 `room.addai` 的时刻）；RSS 为就绪后 3s 常驻。
+
+| 指标 | 优化前（`baabca44`, jar 25.3M） | 优化后（`8f0e16ef`, jar 23.3M） | 变化 |
+| --- | --- | --- | --- |
+| boot_done | 862 ms（828/827/932） | 1,165 ms（1627/827/1041，首跑离群） | ≈持平（噪声内） |
+| engine_socket | 3,810 ms | 3,926 ms | ≈持平 |
+| 常驻 RSS | ~475 MB | ~455 MB | **−20 MB（−4%）** |
+| 加载类总数 | 5,423 | 5,344 | **−79**（jna 44 + Rsa/PrintEx/eula 链） |
+| rwhps 类 | 479 | 479 | 持平 |
+
+**结论**：启动时间由闭源引擎装载主导（引擎载入 ~3-4s），jar 瘦身不改变
+启动速度；收益在分发体积（−1.95M）、常驻内存（−20MB）与加载类数。
+无进一步启动优化的必要证据。
+
+### 本轮数字
+
+删 2 文件 + 10 死字段 + 2 依赖；JVM 行数 32,972 → **32,666**（−306）；
+文件 382 → 380；`git archive` 25,077,760 → **25,036,800**（−40,960 B）；
+Helper.jar 25,263,098 → **23,307,355**（−1,955,743 B，JNA 移除为主）。
+
+**阶段二至此全部收官**（①②③⑤ 完成，④ 评估后不做）。剩余体积为
+gameData 9.7M + 闭源引擎 4.2M + libs.zip 6.4M + 必要依赖，均在保留红线内。
