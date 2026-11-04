@@ -22,7 +22,7 @@ import net.rwhps.server.util.log.Log
 
 /**
  * Parse the [net.rwhps.server.net.core.IRwHps.NetType.ServerProtocol] protocol
- * @property con                GameVersionRelay
+ * @property con                GameVersionServer
  * @property conClass           Initialize
  * @property abstractNetConnect AbstractNetConnect
  * @property version            Parser version

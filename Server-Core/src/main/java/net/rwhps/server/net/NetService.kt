@@ -18,21 +18,17 @@ import io.netty.channel.epoll.EpollEventLoopGroup
 import io.netty.channel.epoll.EpollServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import net.rwhps.server.data.global.Cache
 import net.rwhps.server.data.global.Data
 import net.rwhps.server.data.global.NetStaticData
-import net.rwhps.server.game.manage.IRwHpsManage
 import net.rwhps.server.net.core.AbstractNet
 import net.rwhps.server.net.core.IRwHps
 import net.rwhps.server.net.core.IRwHps.NetType.*
 import net.rwhps.server.net.core.web.AbstractNetWeb
 import net.rwhps.server.net.handler.tcp.StartGameNetTcp
 import net.rwhps.server.net.handler.tcp.StartHttp
-import net.rwhps.server.net.handler.tcp.StartMixProtocol
 import net.rwhps.server.net.handler.tcp.StartRemoteControl
 import net.rwhps.server.net.http.WebData
 import net.rwhps.server.struct.list.Seq
-import net.rwhps.server.struct.map.ObjectMap
 import net.rwhps.server.util.concurrent.threads.GetNewThreadPool.getEventLoopGroup
 import net.rwhps.server.util.internal.net.rudp.ReliableServerSocket
 import net.rwhps.server.util.log.Log.clog
@@ -63,32 +59,25 @@ class NetService {
             "No find Protocol"
         }
 
+        // 仓库瘦身 (2026-11-05): mix 协议分支删除 —— helper 形态不构造 NetService,
+        // mixProtocolEnable 默认 false 且其唯一实现 StartMixProtocol 随 relay/远程
+        // 控制面移除. 原分支经 IRwHpsManage.addIRwHps 取 FakeRwHps, 为 IRwHpsManage
+        // 的最后静态引用之一.
         val abstractNet =
-            if (Data.config.mixProtocolEnable) {
-                val map = ObjectMap<IRwHps.NetType, IRwHps>().apply {
-                    put(GameProtocol, rwHps)
-                    put(RemoteControlProtocol, Cache.iRwHpsCache["MixRemoteControl", { IRwHpsManage.addIRwHps(RemoteControlProtocol, "MixRemoteControlDef") }])
-                    put(HttpProtocol, Cache.iRwHpsCache["MixHttp", { IRwHpsManage.addIRwHps(HttpProtocol, "MixHttpDef") }])
-                }
-                StartMixProtocol(map)
+            if (NetStaticData.checkProtocolIsServer(rwHps.netType)) {
+                StartGameNetTcp(rwHps)
             } else {
-                if (NetStaticData.checkProtocolIsServer(rwHps.netType)) {
-                    StartGameNetTcp(rwHps)
-                } else {
-                    when (rwHps.netType) {
-                        DedicatedToTheBackend -> StartGameNetTcp(rwHps)
-                        HttpProtocol -> StartHttp(rwHps)
-                        RemoteControlProtocol -> StartRemoteControl(rwHps)
-                        GlobalProtocol -> TODO()
-                        else -> TODO()
-                    }
-
+                when (rwHps.netType) {
+                    DedicatedToTheBackend -> StartGameNetTcp(rwHps)
+                    HttpProtocol -> StartHttp(rwHps)
+                    RemoteControlProtocol -> StartRemoteControl(rwHps)
+                    GlobalProtocol -> TODO()
+                    else -> TODO()
                 }
-        }
+            }
 
         this.netType = when (abstractNet) {
             is StartGameNetTcp -> NetTypeEnum.HeadlessNet
-            is StartMixProtocol -> NetTypeEnum.MixTlsAndGame
             is StartRemoteControl -> NetTypeEnum.RemoteControl
             is StartHttp -> NetTypeEnum.HTTPNet
             is AbstractNetWeb -> NetTypeEnum.HTTPNet
@@ -270,7 +259,6 @@ class NetService {
             HeadlessNet,
             RemoteControl,
             HTTPNet,
-            MixTlsAndGame,
             Other
         }
     }

@@ -33,7 +33,7 @@ class HessSocket(private val connect: ConnectionAgreement): Socket() {
     override fun close() {
         if (!close) {
             close = true
-            connect.close(null)
+            connect.close()
         }
     }
 

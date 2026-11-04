@@ -20,8 +20,6 @@ import net.rwhps.server.io.packet.type.PacketType
 import net.rwhps.server.net.NetService
 import net.rwhps.server.net.core.IRwHps
 import net.rwhps.server.net.manage.DownloadManage
-import net.rwhps.server.net.netconnectprotocol.FakeRwHps
-import net.rwhps.server.net.netconnectprotocol.RwHps
 import net.rwhps.server.net.netconnectprotocol.realize.GameVersionPacket
 import net.rwhps.server.util.str.StringUtils
 import net.rwhps.server.util.SystemUtils
@@ -140,17 +138,13 @@ class Initialization {
 
         internal fun loadService() {
             // 仓库瘦身 (2026-11-05): Relay 协议注册随 netconnectprotocol relay
-            // 实现删除 —— helper 形态不做 relay. 枢纽手术试验一后 CustomServerSocket
-            // 直接构造 RwHps (不经下方 "IRwHps" 回退); 该注册保留给
-            // IRwHpsManage.addIRwHps 回退路径 (NetService mix 分支静态引用).
-            // GameVersionPacket/FakeRwHps 注册必须保留.
+            // 实现删除 —— helper 形态不做 relay. 枢纽手术后 CustomServerSocket
+            // 直接构造 RwHps 并直赋 NetStaticData.RwHps, IRwHpsManage 注册表与
+            // ServiceType.IRwHps 三处注册 (无消费方) 一并删除.
+            // GameVersionPacket/PacketType 注册必须保留.
             ServiceLoader.addService(ServiceType.ProtocolPacket, IRwHps.NetType.GlobalProtocol.name, GameVersionPacket::class.java)
 
             ServiceLoader.addServiceObject(ServiceType.PacketType, IRwHps.NetType.GlobalProtocol.name, PacketType.INSTANCE)
-
-            ServiceLoader.addService(ServiceType.IRwHps, "IRwHps", RwHps::class.java)
-            ServiceLoader.addService(ServiceType.IRwHps, IRwHps.NetType.RemoteControlProtocol.name, FakeRwHps::class.java)
-            ServiceLoader.addService(ServiceType.IRwHps, IRwHps.NetType.HttpProtocol.name, FakeRwHps::class.java)
         }
 
     }

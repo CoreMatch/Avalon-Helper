@@ -62,11 +62,9 @@ import net.rwhps.server.util.EnumUtils
  * 请注意, 如果协议类父类被 @DependsClassLoader 标识, 那么ServiceLoader会将注册类绑定到对应的类加载器
  *
  * ## 实例化 `IRwHps`
- * `IRwHps` 主要在 [net.rwhps.server.game.manage.IRwHpsManage] 中被实例化
- *
- * 默认通过 [net.rwhps.server.core.ServiceLoader] 使用参数 `(ServiceType.IRwHps, ServerNetType.name, IRwHps.NetType::class.java)` 来完成
- *
- * 如果找不到对应实现, 则默认使用 `ServerNetType.name` 为 `IRwHps`, 因此, 你可以在覆盖协议时自定义协议接口的实现
+ * 枢纽手术 (2026-11-05) 后: `CustomServerSocket` (引擎桥接) 在启动时直接构造
+ * `RwHps(classLoader, NetType.ServerProtocol)` 并赋值 `NetStaticData.RwHps`.
+ * 原 `IRwHpsManage` 注册表与 ServiceLoader 回退查找已随 relay 簇删除.
  *
  * ## 获取实例
  * 当 `IRwHps` 被实例化时 它应该将 `typeConnect` `abstractNetPacket` 通过反射进行实例化, 如果失败则默认返回空实现
