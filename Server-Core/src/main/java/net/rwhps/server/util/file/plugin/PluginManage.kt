@@ -17,8 +17,6 @@ import net.rwhps.server.game.event.core.AbstractGlobalEventImpl
 import net.rwhps.server.game.event.core.EventListenerHost
 import net.rwhps.server.plugin.Plugin
 import net.rwhps.server.plugin.PluginLoadData
-import net.rwhps.server.plugin.PluginsLoad.Companion.addPluginClass
-import net.rwhps.server.plugin.PluginsLoad.Companion.resultPluginData
 import net.rwhps.server.struct.list.Seq
 import net.rwhps.server.util.annotations.DidNotFinish
 import net.rwhps.server.util.annotations.mark.PrivateMark
@@ -52,17 +50,9 @@ object PluginManage {
     }
 
     fun init(fileUtils: FileUtils) {
-        pluginData = resultPluginData(fileUtils)
-    }
-
-    internal fun addPluginClass(pluginInfo: BeanPluginInfo, main: Plugin, mkdir: Boolean, skip: Boolean) {
-        addPluginClass(pluginInfo.name, pluginInfo.internalName, pluginInfo.author, pluginInfo.description, pluginInfo.version, main, mkdir, skip)
-    }
-
-    fun addPluginClass(
-        name: String, internalName: String, author: String, description: String, version: String, main: Plugin, mkdir: Boolean, skip: Boolean = false
-    ) {
-        addPluginClass(name, internalName, author, description, version, main, mkdir, skip, pluginData!!)
+        // 仓库瘦身 (2026-11-05): 插件文件系统扫描随 PluginsLoad 删除;
+        // helper 形态经反射直接置空表, 此方法仅保留空实现兼容签名.
+        pluginData = Seq()
     }
 
     /** 最先执行 可以进行Plugin的数据读取  -1  */
