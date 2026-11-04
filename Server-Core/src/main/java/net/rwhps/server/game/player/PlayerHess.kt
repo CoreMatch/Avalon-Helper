@@ -12,18 +12,14 @@ package net.rwhps.server.game.player
 import net.rwhps.server.func.Prov
 import net.rwhps.server.game.headless.core.link.AbstractLinkPlayerData
 import net.rwhps.server.game.manage.HeadlessModuleManage
-import net.rwhps.server.net.core.IRwHps
 import net.rwhps.server.net.core.server.AbstractNetConnectServer
-import net.rwhps.server.net.netconnectprotocol.internal.relay.fromRelayJumpsToAnotherServerInternalPacket
 import net.rwhps.server.struct.map.ObjectMap
-import net.rwhps.server.util.IsUtils
 import net.rwhps.server.util.Time
 import net.rwhps.server.util.concurrent.lock.Synchronize
 import net.rwhps.server.util.file.load.I18NBundle
 import net.rwhps.server.util.file.plugin.value.Value
 import net.rwhps.server.util.inline.coverConnect
 import net.rwhps.server.util.log.exp.ImplementedException
-import net.rwhps.server.util.log.exp.NetException
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -214,26 +210,8 @@ open class PlayerHess(
     }
 
     /**
-     * For [IRwHps.NetType.ServerTestProtocol] :
-     *  At this time, the local server does not participate in the forwarding, and the client directly disconnects the server and joins the new server.
-     *  The player will not exist in `playerManage.playerGroup` and `playerManage.playerAll`
-     *  Player ⇄ NewServer
-     *
-     * @param ip
-     * @param port
+     * 清理玩家连接绑定 (con 置空).
      */
-    @JvmOverloads
-    @Throws(NetException::class)
-    fun playerJumpsToAnotherServer(ip: String, port: Int = 5123) {
-        if (!IsUtils.isDomainName(ip)) {
-            throw NetException("[ERROR_DOMAIN] Error Domain")
-        }
-        if (con == null) {
-            throw NetException("[CONNECT_CLOSE] Connect disconnect")
-        }
-        con!!.coverConnect().sendPacket(fromRelayJumpsToAnotherServerInternalPacket("$ip:$port"))
-    }
-
     open fun clear() {
         con = null
     }

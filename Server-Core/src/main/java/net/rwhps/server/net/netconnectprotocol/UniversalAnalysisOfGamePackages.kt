@@ -9,7 +9,6 @@
 
 package net.rwhps.server.net.netconnectprotocol
 
-import net.rwhps.server.game.player.PlayerRelay
 import net.rwhps.server.io.GameInputStream
 import net.rwhps.server.struct.list.Seq
 import net.rwhps.server.util.IsUtils
@@ -49,45 +48,4 @@ object UniversalAnalysisOfGamePackages {
         return result
     }
 
-    @Throws(IOException::class)
-    fun getPacketTeamData(parse: GameInputStream, playerRelay: PlayerRelay) {
-        if (parse.parseVersion == 0) {
-            throw ParseException("need To Parse The Version")
-        }
-
-        parse.use { inStream ->
-            playerRelay.site = inStream.readInt()
-            if (inStream.readBoolean()) return
-            val playerSize = inStream.readInt()
-            inStream.getDecodeStream(true).use {
-                for (count in 0 until playerSize) {
-                    if (it.readBoolean()) {
-                        it.readInt()
-                        val site = it.readByte()
-                        if (site == playerRelay.site) {
-                            it.readInt()
-                            playerRelay.team = it.readInt()
-                            playerRelay.name = it.readIsString()
-                            it.readBoolean()
-                        } else {
-                            it.skip(8)// Int+Int
-                            it.readIsString()
-                            it.skip(1)
-                        }
-                        it.skip(12) // Int+Long
-                        if (parse.parseVersion >= 55) it.skip(5)  // Boolean+Int
-                        if (parse.parseVersion >= 91) it.skip(5)  // Int+Byte
-                        if (parse.parseVersion >= 97) it.skip(2)  // Boolean *2
-                        if (parse.parseVersion >= 125) it.skip(6) // Boolean+Boolean+Int
-                        if (parse.parseVersion >= 149) {
-                            it.readIsString(); it.skip(4)
-                        }// Int
-                        if (parse.parseVersion >= 156) {
-                            it.readIsInt(); it.readIsInt(); it.readIsInt(); it.readIsInt(); it.skip(4)
-                        }// Int
-                    }
-                }
-            }
-        }
-    }
 }

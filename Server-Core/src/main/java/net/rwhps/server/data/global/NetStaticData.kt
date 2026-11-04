@@ -10,7 +10,6 @@
 package net.rwhps.server.data.global
 
 import net.rwhps.server.game.manage.IRwHpsManage
-import net.rwhps.server.game.room.RelayRoom
 import net.rwhps.server.net.GroupNet
 import net.rwhps.server.net.NetService
 import net.rwhps.server.net.core.IRwHps
@@ -23,19 +22,6 @@ import net.rwhps.server.util.alone.BlackList
 object NetStaticData {
     @JvmField
     val groupNet = GroupNet()
-
-    /** Single Room Mode No ID required
-     *
-     * 枢纽手术试验二 (2026-11-05): 构造从 object 初始化 (字段即时构造) 改为
-     * 惰性 —— NetStaticData 类加载不再钉住 RelayRoom 簇. 保留原语义:
-     * 每次访问重置 closeRoom=false; by lazy 默认 SYNCHRONIZED 线程安全.
-     */
-    private val relayRoomInstance: RelayRoom by lazy { RelayRoom("RW-HPS Beta Relay", groupNet) }
-    val relayRoom: RelayRoom
-        get() {
-            relayRoomInstance.closeRoom = false
-            return relayRoomInstance
-        }
 
     @JvmField
     val blackList = BlackList()
