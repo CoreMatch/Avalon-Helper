@@ -154,20 +154,40 @@ object GoBridge {
     /**
      * 对应 room.addai: 照搬上游 PlayerManage.addAI 的两步 ——
      * 引擎 addAi() 后扫描位置, 把引擎回报的 AI 包装成 AiPlayer 入房.
+     *
+     * 有意修正（作者已批准，2026-11-04）: 返回创建的 AI 档案 JSON
+     * (协议 PlayerProfile + position), 随 room.addai 应答回传 Go 侧登记;
+     * 引擎不会为 AI 触发 PlayerJoinEvent (上游该事件只由真实连接的
+     * PlayerConnectX 发出), 档案没有事件可搭 (DECISIONS D-9).
+     * 返回 null: 引擎没有创建 AI (无空位), 对应上游扫描的静默返回.
      */
     @JvmStatic
-    fun addAi() {
+    fun addAi(): String? {
         val module = GameEngine.data
         module.gameScriptMultiPlayer.addAi()
         for (position in 0 until Data.configServer.maxPlayer) {
             if (module.room.playerManage.getPlayer(position) == null && module.gameHessData.existPlayer(position)) {
-                AiPlayer(module.gameHessData.getHeadlessAIServer(), module.gameLinkServerData.getPlayerAIData(position)).let {
-                    module.room.playerManage.playerGroup.add(it)
-                    module.room.playerManage.playerAll.add(it)
-                }
-                return
+                val ai = AiPlayer(module.gameHessData.getHeadlessAIServer(), module.gameLinkServerData.getPlayerAIData(position))
+                module.room.playerManage.playerGroup.add(ai)
+                module.room.playerManage.playerAll.add(ai)
+                return aiProfileJson(ai, position)
             }
         }
+        return null
+    }
+
+    /** 协议 PlayerProfile + position: room.addai 应答的 AI 档案 (v2-ext 扩展) */
+    private fun aiProfileJson(p: PlayerHess, position: Int): String {
+        val o = JsonObject()
+        o.addProperty("id", p.connectHexID)
+        o.addProperty("name", p.name)
+        o.addProperty("team", p.team)
+        o.addProperty("ready", true)
+        o.addProperty("host", false)
+        o.addProperty("bot", true)
+        o.addProperty("spectator", false)
+        o.addProperty("position", position)
+        return o.toString()
     }
 
     /** 对应 room.sync: gameLinkFunction.allPlayerSync() */

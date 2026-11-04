@@ -343,8 +343,12 @@ private fun dispatch(line: String) {
             if (errReason != null) {
                 respond(id, false, errReason); return
             }
-            Bridge.call("addAi")
-            respond(id, true)
+            // v2-ext 扩展: 引擎创建的 AI 档案随应答回传 (Go 侧据此登记入房);
+            // 引擎未创建 AI (无空位) 时 ai 字段缺失
+            val profileJson = Bridge.call("addAi") as String?
+            respond(id, true, extra = if (profileJson == null) null else JsonObject().apply {
+                add("ai", JsonParser.parseString(profileJson))
+            })
         }
 
         "room.sync" -> {
