@@ -331,22 +331,6 @@ class RelayRoom {
         }
 
         @JvmStatic
-        fun getAllRelayIpCountry(): Map<String, Int> {
-            return mutableMapOf<String, Int>().also {
-                mutableMapOf<String, AtomicInteger>().also { temp ->
-                    serverRelayDataRoom.values.forEach { relay ->
-                        temp.computeIfAbsent(relay.admin!!.ipCountry) { AtomicInteger(0) }.incrementAndGet()
-                        relay.abstractNetConnectIntMap.values.forEach { connect ->
-                            temp.computeIfAbsent(connect.ipCountry) { AtomicInteger(0) }.incrementAndGet()
-                        }
-                    }
-                }.forEach { (country, count) ->
-                    it[country] = count.get()
-                }
-            }
-        }
-
-        @JvmStatic
         fun getAllRelayVersion(): Map<Int, Int> {
             return mutableMapOf<Int, Int>().also {
                 mutableMapOf<Int, AtomicInteger>().also { temp ->

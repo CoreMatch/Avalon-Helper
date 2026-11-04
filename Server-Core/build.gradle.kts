@@ -47,9 +47,6 @@ dependencies {
         exclude("org.json")
     }
 
-    //implementation("org.lionsoul:ip2region:1.7.2")
-    implementation("net.renfei:ip2location:1.2.1")
-
     implementation("net.java.dev.jna:jna:5.14.0")
 
     implementation("org.jline:jline-reader:${Versions.jLineVersion}")

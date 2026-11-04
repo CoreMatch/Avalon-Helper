@@ -1,5 +1,4 @@
-jar:RW-HPS:TimeTaskQuartz:unspecified:null
-jar:RW-HPS:ASM-Framework:unspecified:null
+jar:rwhps-iprm:ASM-Framework:unspecified:null
 jar:org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.1:null
 jar:org.jetbrains.kotlin:kotlin-stdlib:2.0.0:null
 jar:io.netty:netty-codec-http:4.1.108.Final:null
@@ -18,7 +17,6 @@ jar:com.vdurmont:emoji-java:5.1.1:null
 jar:org.apache.commons:commons-compress:1.26.1:null
 jar:org.tukaani:xz:1.9:null
 jar:com.squareup.okhttp3:okhttp:4.12.0:null
-jar:net.renfei:ip2location:1.2.1:null
 jar:org.jline:jline-terminal-jna:3.25.1:null
 jar:net.java.dev.jna:jna:5.14.0:null
 jar:org.jline:jline-reader:3.25.1:null

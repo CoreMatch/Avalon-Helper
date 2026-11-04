@@ -60,18 +60,6 @@ class Initialization {
         Data.i18NBundle = Data.i18NBundleMap["EN"]!!
     }
 
-    private fun loadIpBin() {
-        if (!Data.config.ipCheckMultiLanguageSupport) {
-            return
-        }/*
-		try {
-			Data.ip2Location = new IP2Location();
-			Data.ip2Location.Open(FileUtil.getFolder(Data.Plugin_Data_Path).toFile("IP.bin").getPath(), true);
-		} catch (IOException e) {
-			Log.error("IP-LOAD ERR",e);
-		}*/
-    }
-
     private fun initRsa() {
         try {
             val rsa = Rsa().buildKeyPair()

@@ -44,16 +44,6 @@ abstract class AbstractNetConnect(protected val connectionAgreement: ConnectionA
         get() = connectionAgreement.ipLong24
 
     /**
-     * Get connection IP Country
-     * @return IP
-     */
-    val ipCountry: String
-        get() = connectionAgreement.ipCountry
-
-    val ipCountryAll: String
-        get() = connectionAgreement.ipCountryAll
-
-    /**
      * Get the local port used
      * @return Port
      */

@@ -49,9 +49,6 @@ data class BeanCoreConfig(
     /** Automatically after starting UPLIST */
     val autoUpList: Boolean = false,
 
-    /** ip多语言支持 */
-    val ipCheckMultiLanguageSupport: Boolean = true,
-
     /** Single user relay disable pop-up selection */
     val singleUserRelay: Boolean = false,
     /** Default mods configuration for single user relay */
