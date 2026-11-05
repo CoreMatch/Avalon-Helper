@@ -7,8 +7,8 @@ RW-HPS 用户手册
 
 ### 安装
 
-* [直接运行](Run.md)
-* [使用Docker容器](../../../docker/README.md)
+* 直接运行
+* 使用Docker容器
 
 ### 了解运行环境
 

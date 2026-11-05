@@ -1,14 +1,14 @@
 # RW-HPS - User Manual
 
 RW-HPS User Manual  
-This document is intended for users who are not familiar with development but wish to use RW-HPS. If you want to develop, please first read the [Development Documentation](../plugin/README.md).
+This document is intended for users who are not familiar with development but wish to use RW-HPS. If you want to develop, please first read the [Development Documentation](../../zh/plugin/README.md).
 
 ## Starting RW-HPS Using the Pure Console Version
 
 ### Installation
 
-* [Direct Run](Run.md)
-* [Using Docker Container](../../../docker/README.md)
+* Direct Run
+* Using Docker Container
 
 ### Understanding the Running Environment
 

@@ -11,7 +11,7 @@ JVM 环境和开发准备工作 请自行利用搜索引擎 最低使用Java8
 - [了解Plugin的文件构成](JsonConfig.md)
 - 开发插件
     - [了解Kotlin与Java的语法差异](KotlinAndJava.md)
-    - [阅读主要的API文档](../api/CoreAPI.md)
+    - [阅读主要的API文档](../api/HttpAPI.md)
     - [开始第一个插件](https://github.com/deng-rui/RW-HPS-ExampleJavaPlugin)
 - 扩展功能
     - [覆盖游戏的协议](PluginOverride.md)
