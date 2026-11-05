@@ -10,21 +10,21 @@ This section introduces the development of RW-HPS plugins using JVM platform pro
 
 **To avoid encountering various issues, please read carefully step by step**
 
-1. [**JVM Environment and Development Preparation**](plugin/Preparations.md)
+1. [**JVM Environment and Development Preparation**](../zh/plugin/Preparations.md)
 
 2. Review the API Documentation (see below)
 
 ### RW-HPS-core API Documentation Navigation
 
-Please review the **RW-HPS-Core documentation** in the  [**CoreAPI Directory**](api/CoreAPI.md).
+Please review the **RW-HPS-Core documentation** in the  [**CoreAPI Directory**](api/).
 
 ### Plugin help
 
-Please review the various operations of **RW-HPS-Plugin** in the [**Plugin Development Directory**](plugin/README.md).
+Please review the various operations of **RW-HPS-Plugin** in the [**Plugin Development Directory**](../zh/plugin/README.md).
 
 ### RW-HPS Version Specification
 
-Please review the **RW-HPS version specifications** in the [**Version Specification document**](update/Evolution.md).
+Please review the **RW-HPS version specifications** in the [**Version Specification document**](../zh/update/Evolution.md).
 
 ## Other RW-HPS Protocol Implementations
 
