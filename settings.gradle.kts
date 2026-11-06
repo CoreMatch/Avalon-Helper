@@ -1,3 +1,5 @@
+rootProject.name = "Avalon-Helper"
+
 include(":ASM-Framework")
 include(":Server-Core")
 

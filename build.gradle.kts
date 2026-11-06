@@ -32,6 +32,8 @@ plugins {
 }
 
 allprojects {
+    group = "io.github.corematch"
+
     apply(plugin = "java")
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
@@ -39,7 +41,7 @@ allprojects {
 
     tasks.jar {
         manifest {
-            attributes(mapOf("Implementation-Vendor" to "RW-HPS Team"))
+            attributes(mapOf("Implementation-Vendor" to "CoreMatch"))
             attributes(mapOf("Build-Jar-Time" to SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date().time)))
         }
     }
@@ -88,9 +90,9 @@ fun Project.configureDokka() {
             pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
                 this.footerMessage = """Copyright 2020-${
                     LocalDateTime.now().year
-                } <a href="https://github.com/RW-HPS">RW-HPS Technologies</a> and contributors.
+                } <a href="https://github.com/SamuelCheston/Avalon-Helper">CoreMatch</a> and contributors.
             Source code:
-            <a href="https://github.com/deng-rui/RW-HPS">GitHub</a>
+            <a href="https://github.com/SamuelCheston/Avalon-Helper">GitHub</a>
             """.trimIndent()
             }
         }

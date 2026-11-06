@@ -1,59 +1,47 @@
-<div align="center">
-<h1>RW-HPS Project Unofficial</h1>
+# Avalon-Helper
 
-这是一个非官方仓库。由于原仓库已被删除，因此这是一个备份。
-This is an unofficial repository. Due to the original repository being deleted, this is a backup.
+[Avalon](https://github.com/CoreMatch/Avalon) 的服务端游戏引擎 helper：把闭源
+Rusted Warfare 游戏引擎承载为独立 JVM 进程，经 stdin/stdout 线协议
+（v2 / v2-ext）接受 Avalon 的驱动。
 
-**RW-HPS** is a **Rusted Warfare** game server (target client **1.15** / protocol **176**)
+[English version / 英文介绍](README.md) **或** [Chinese version / 中文介绍](README-CN.md)
 
-_**Personal project, for learning only**_
-</div>
+## 职责
 
-## Current Architecture
-
-本仓库承载 **Java/Kotlin 引擎壳**：承载闭源游戏引擎，把它作为独立 Java 进程
-（helper）提供给 Go 运行时主体
-[Avalon](https://github.com/CoreMatch/Avalon)，经 stdin/stdout 线协议
-（v2 / v2-ext）接受 Go 侧驱动。共 3 个模块（另有 `buildSrc` 为 Gradle 构建
-工具，不算产品模块）：
+本仓库是引擎壳，不是独立运行的游戏服务端：
 
 | 模块 | 语言 | 职责 |
 | --- | --- | --- |
-| `Helper/` | Kotlin | 引擎壳：把上游 headless 内核封装为独立 Java 进程，经 stdin/stdout 线协议（v2 / v2-ext）接受 Go 侧驱动 |
-| `Server-Core/` | Java/Kotlin | 上游服务端实体与引擎装载链（在 helper 的 JVM 内被加载） |
+| `Helper/` | Kotlin | 协议入口：`HelperMain` 协议主循环 + `GoBridge` 引擎桥接，v2 / v2-ext 全部操作 |
+| `Server-Core/` | Java/Kotlin | 引擎装载链与桥接类（在 helper 的 JVM 内被加载） |
 | `ASM-Framework/` | Kotlin | 字节码改写框架，装载期修补闭源引擎 |
 
-线协议定义、运行形态与配置见 Avalon 仓库（`docs/HELPER-PROTOCOL.md` 与
-`docs/DISTRIBUTION.md`）。`data/gameData` 为引擎所需游戏数据，随本仓库提供。
+运行时主体（网关 / 房间 / 协议 / 控制台 / HTTP）在 Avalon 仓库；Avalon 经
+`gameHelperPath` 拉起本进程，本进程经线协议接受驱动并回传游戏事件与包。
+不配置 helper 时 Avalon 仍可完整启动，只是无法真实开局。
 
-## Build
+## 线协议
 
-- **JDK 17**（构建引擎壳；引擎与 Kotlin 运行时按 JDK 17 验证）
+契约在 Avalon 仓库：`docs/HELPER-PROTOCOL.md`（权威实现
+`internal/game/external/protocol.go`）。本仓库只有 helper 侧实现，不存第二份。
+
+## 构建
+
+- **JDK 17**（过新的 JDK 会使 Kotlin 2.0.0 编译器崩溃）
 
 ```bash
-# 产物 Helper/build/libs/Helper.jar
+# 产物: Helper/build/libs/avalon-helper.jar (fat jar, 不入库)
 JAVA_HOME=<jdk17> ./gradlew :Helper:jar
 ```
 
-## Run
+## 被 Avalon 拉起
 
-helper 不是独立运行的服务端：它由 Avalon 的 Go 服务端经 `gameHelperPath`
-配置拉起（配置接入与分发包见 Avalon 仓库 `README.md` 与
-`docs/DISTRIBUTION.md`）。
+Avalon 以 `gameHelperPath` 指向 `avalon-helper.jar`，并用
+`-Davalonhelper.dataPath` 指定 helper 的数据目录（其下 `data/gameData` 为引擎
+所需游戏数据，随本仓库提供）。运行配置、分发包与验收见 Avalon 仓库
+`README.md` 与 `docs/DISTRIBUTION.md`。
 
-## Documentation
+## 许可证
 
-- [`docs/REPO-SLIM.md`](docs/REPO-SLIM.md) —— 仓库瘦身记录与"当前不可再删项"护栏
-- 线协议合同：Avalon 仓库 `docs/HELPER-PROTOCOL.md`
-- 分发与运行：Avalon 仓库 `docs/DISTRIBUTION.md`、`docs/BASELINE.md`
-
-## Statements
-
-- RW-HPS is a free and open source project and is only for educational purposes.
-  You shall not use this project for any illegal purposes.
-- 一切开发旨在学习，请勿用于非法用途。
-
-## License
-
-[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)（见 [`LICENSE`](LICENSE)），
-并沿用原项目 EULA（CC BY-NC-SA 4.0，非商业使用）。
+GNU AGPLv3（见 [`LICENSE`](LICENSE)）。本程序源自上游 RW-HPS 项目；按 AGPL
+要求，源文件头部保留上游版权声明。

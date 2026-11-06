@@ -1,0 +1,44 @@
+/*
+ * Copyright 2020-2024 Dr (dr@der.kim) and contributors.
+ *
+ * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
+ * Use of this source code is governed by the GNU AGPLv3 license that can be found through the following link.
+ *
+ * https://github.com/deng-rui/RW-HPS/blob/master/LICENSE
+ */
+
+
+@file:JvmName("InlineUtils") @file:JvmMultifileClass
+
+package io.github.corematch.avalonhelper.util.inline
+
+import io.github.corematch.avalonhelper.struct.list.Seq
+import io.github.corematch.avalonhelper.util.file.FileUtils
+import io.github.corematch.avalonhelper.util.io.IoRead
+import java.io.InputStream
+
+/**
+ * IoReadStream
+ * @author Dr (dr@der.kim)
+ */
+fun InputStream.readBytes(): ByteArray {
+    return IoRead.readInputStreamBytes(this)
+}
+
+fun InputStream.readString(): String {
+    return FileUtils.readFileString(this)
+}
+
+fun InputStream.readFileListString(): Seq<String> {
+    return FileUtils.readFileListString(this)
+}
+
+fun Class<*>.readBytes(): ByteArray {
+    return this.javaClass.toString().readAsClassBytes()
+}
+
+fun String.readAsClassBytes(): ByteArray {
+    return FileUtils.getInternalFileStream(
+            "/" + this.replace("class ", "").replace(".", "/") + ".class"
+    ).readBytes()
+}
