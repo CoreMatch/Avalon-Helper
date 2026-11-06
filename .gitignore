@@ -1,9 +1,4 @@
 logs/
-/net/build/
-/Server-All/*
-/Server-Core/build/
-/TimeTaskQuartz/build/
-/Java-Doc/pages/
 /*/build/
 config/
 *.gif
@@ -19,43 +14,15 @@ version.properties
 hs_err_pid*
 crash-report-*
 
-## Robovm
-/ios/robovm-build/
+## IDE (IntelliJ / Eclipse)
 
-## GWT
-/html/war/
-/html/gwt-unitCache/
-.apt_generated/
-.gwt/
-gwt-unitCache/
-www-test/
-.gwt-tmp/
-
-## Android Studio and Intellij and Android in general
-/android/libs/armeabi/
-/android/libs/armeabi-v7a/
-/android/libs/arm64-v8a/
-/android/libs/x86/
-/android/libs/x86_64/
-/android/gen/
 .idea/
 *.ipr
 *.iws
 *.iml
-/android/out/
-com_crashlytics_export_strings.xml
-
-## Eclipse
-
 .classpath
 .project
 .metadata/
-/android/bin/
-/core/bin/
-/desktop/bin/
-/html/bin/
-/ios/bin/
-/ios-moe/bin/
 *.tmp
 *.bak
 *.swp
@@ -65,27 +32,16 @@ com_crashlytics_export_strings.xml
 .externalToolBuilders/
 *.launch
 
-
 ## Gradle
 
 /local.properties
 .gradle/
 gradle-app.setting
 /build/
-/android/build/
-/core/build/
-/desktop/build/
-/html/build/
-/ios/build/
-/ios-moe/build/
 
 ## OS Specific
 .DS_Store
 Thumbs.db
-android/libs/
-
-
-cmd.exe
 
 # buildSrc makeDependTree 构建期自动重写, 无运行时读取方 (LibraryManager 已删)
 **/src/main/resources/maven/*/*.txt
