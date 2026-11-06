@@ -33,7 +33,7 @@ dependencies {
     compileOnly(fileTree(mapOf("dir" to "libs", "include" to "slick.jar")))
 
     // Json 解析
-    // 我建议使用 RW-HPS Json 方法 而不是直接使用依赖
+    // 我建议使用 Avalon-Helper Json 方法 而不是直接使用依赖
     api("com.google.code.gson:gson:2.10")
     api("org.json:json:20240303")
 
@@ -69,7 +69,7 @@ tasks.jar {
     project.makeDependTree()
 
     manifest {
-        attributes(mapOf("Implementation-Title" to "RW-HPS"))
+        attributes(mapOf("Implementation-Title" to "Server-Core"))
     }
 }
 

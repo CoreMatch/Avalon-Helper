@@ -9,13 +9,13 @@
 
 package com.corrodinggames.rts.gameFramework.j
 
-import net.rwhps.server.io.packet.Packet
-import net.rwhps.server.net.core.IRwHps
-import net.rwhps.server.plugin.internal.headless.inject.lib.PlayerConnectX
+import io.github.corematch.avalonhelper.io.packet.Packet
+import io.github.corematch.avalonhelper.net.core.IProtocolProvider
+import io.github.corematch.avalonhelper.plugin.internal.headless.inject.lib.PlayerConnectX
 import com.corrodinggames.rts.gameFramework.j.au as PacketHess
 
 /**
- * 将 Game-Lib 的 Packet 与 RW-HPS 的 Packet 互相转换
+ * 将 Game-Lib 的 Packet 与 Avalon-Helper 的 Packet 互相转换
  * 并且将包输入进 NetEngine
  *
  * @property netEngine NetEngine
@@ -43,7 +43,7 @@ class NetEnginePackaging(private val netEngine: ad, private val playerConnectX: 
     /**
      * 转换[Packet]为Hess的[PacketHess]
      *
-     * @param packet RW-HPS的[PacketHess]
+     * @param packet Avalon-Helper的[PacketHess]
      * @return Hess 的 [PacketHess]
      */
     fun transformHessPacket(packet: Packet): PacketHess {
@@ -57,10 +57,10 @@ class NetEnginePackaging(private val netEngine: ad, private val playerConnectX: 
      * 转换[Packet]为Hess的[PacketHess]
      *
      * @param packetHess Hess的[PacketHess]
-     * @return RW-HPS的[PacketHess]
+     * @return Avalon-Helper的[PacketHess]
      */
     fun transformPacket(packetHess: PacketHess): Packet {
-        return Packet(IRwHps.packetType.from(packetHess.b), packetHess.c)
+        return Packet(IProtocolProvider.packetType.from(packetHess.b), packetHess.c)
     }
 
     companion object {

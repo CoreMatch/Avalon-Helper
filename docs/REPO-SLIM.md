@@ -1,6 +1,6 @@
 # REPO-SLIM: 以 Helper 编译/运行闭包为判据的仓库瘦身（最终版）
 
-> 注：本文是瘦身当时的记录。文中 `Go-Server/` 现已迁至独立仓库
+> 注：本文是瘦身当时的记录，类名已按 2026-11-07 改名同步为现名（协议提供器族）。文中 `Go-Server/` 现已迁至独立仓库
 > [Avalon](https://github.com/CoreMatch/Avalon)（Go 运行时主体）。
 
 日期: 2026-11-04 ～ 2026-11-05 · 基线: `master` @ `b0fbccfa`（第一轮前）
@@ -40,7 +40,7 @@
 | --- | --- | --- | --- |
 | 1 | `0e82df79` | 枢纽解引用 5 处（`Initialization` 资源锚点 `Main::class`→`Initialization::class`；`Data.vote` 字段、`ClientCommands` /vote 注册、`GameVersionServer` 聊天投票分发、`ServerRoom` stopVote），删 `Main.kt` + `command/` 全链 6 文件 | 全绿（9.95s/13.00s） |
 | 2 | `92b27bea` | 剪 `PluginManage→PluginsLoad`（init 置空表、删 addPluginClass 重载；`pluginData` 字段与 run* 方法保留——HelperMain 反射依赖），删 `custom/`、`plugin/beta/**` 17 文件、`plugin/center`、`PluginsLoad`、`JavaScriptPluginGlobalContext`、`GetVersion`、`moreheadless`、`Server-Core/src/test/**` 24 文件，共 48 删 | 全绿（9.29s/12.41s） |
-| 3 | `ede1145c` | 剪 `Initialization.loadService` 的 4 项 relay 注册与 `initGetServerData` 统计信标（relay.der.kim）；保留 `RwHps`/`FakeRwHps`/`GameVersionPacket`/`PacketType` 注册（`CustomServerSocket.run()` 运行时经 `IRwHpsManage` 回退取 `RwHps`，类载日志证实）。**失败记录**：首次编辑误将文件尾部 `init{}` 块切掉，helper 启动 NPE（i18NBundleMap 未初始化），恢复 init 块后通过 | 全绿（9.44s/12.92s） |
+| 3 | `ede1145c` | 剪 `Initialization.loadService` 的 4 项 relay 注册与 `initGetServerData` 统计信标（relay.der.kim）；保留 `ProtocolProvider`/`FakeProtocolProvider`/`GameVersionPacket`/`PacketType` 注册（`CustomServerSocket.run()` 运行时经 `ProtocolRegistry` 回退取 `ProtocolProvider`，类载日志证实）。**失败记录**：首次编辑误将文件尾部 `init{}` 块切掉，helper 启动 NPE（i18NBundleMap 未初始化），恢复 init 块后通过 | 全绿（9.44s/12.92s） |
 | 4 | `78ecd98e` | 移除 `TimeTaskQuartz/` 模块与 org.quartz 依赖：新增 `core/thread/SimpleTimeTask.kt`（ScheduledExecutorService 等价替身，API/语义对齐 TimeTaskManage），`Threads.kt` 切换；连带删 `Initialization.loadLib`（唯一调用方 Main.kt 已删）、`LibraryManager.kt`、`LibraryManagerError.kt`、settings include 与 Dokka 条目。**失败记录**：漏删 `Server-Core/build.gradle.kts` 的 `project(":TimeTaskQuartz")`，配置期报错，补删后通过 | 全绿（10.62s/13.10s） |
 | 5 | `4e7182f4` | 删 `inject/ex/FFA_X.kt`。三重验证：全仓零引用；game-lib.jar strings 扫描 0 处按名引用；真实对局类载 0 次加载（该类为上游 @DidNotFinish "ONLY Test" 实验，触发接线本就不存在） | 全绿（10.30s/13.05s） |
 | 6 | `a7cddd6c` | 新 CI `.github/workflows/helper.yml`：JDK17 构建 `:Helper:jar` + 产物上传，不引入发布流水线 | 全绿（9.75s/12.86s） |
@@ -58,7 +58,7 @@
 | 区域 | 钉住它的运行时事实 | 结论 |
 | --- | --- | --- |
 | ~~relay 类簇~~ | **第五轮已删除**（`81bbc009`/`9fcb4e21`）：试验二清障后纯静态手术，11 文件删 9（`RelayServerType.kt` 因 inject 活分发触达保留），类载交叉 0 加载 | 已清 |
-| `net/` 其余（NetService/NetStaticData/netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时直接构造 `RwHps` 并直赋 `NetStaticData.RwHps`（第五轮批3 后，`IRwHpsManage` 注册表已删）→ `GameVersionPacket` | 真实运行时依赖，保留 |
+| `net/` 其余（NetService/NetStaticData/netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时直接构造 `ProtocolProvider` 并直赋 `NetStaticData.ProtocolProvider`（第五轮批3 后，`ProtocolRegistry` 注册表已删）→ `GameVersionPacket` | 真实运行时依赖，保留 |
 | `core/Application.kt` + `core/NetServer.kt` | `Data.kt:123` god object 字段 `val core = Application()`。枢纽试验三分析：20 处活读取面（admin/settings/serverHessUuid/http），惰性可行但推迟窗口≈0 且不解锁删除 | 保留；删除 = 重写 20 处读取点 + 替代 Administration/PluginData/HttpRequestManage，属大规模重写，建议阶段二最后做或不做 |
 | `game/`、`io/`、`util/`、`struct/`、`func/` 中未加载部分 | 被上述运行时链与 `Data.kt`（god object）静态引用；同包引用无法静态穷尽 | 保守保留；再删需逐类运行时验证。第五轮闭包复扫（类载并集种子）后闭包外剩 8 文件，全部位于保守区：`FastIntValueClass`（ASM 重定向）、`SyncByteArrayChannel`/`DynamicPrintStream`（io）、`IntSeq`/`SeqSave`/`LongIntMap`/`IntMap`/`ObjectIntMap`（struct 容器，后两者为 relay 删除后新暴露的零引用零加载类，按区纪律保留并记录） |
 | `resources`（HZK16/ASC16 字体、libs.zip 等） | 被保留类 `Font16` 与引擎装载链静态引用 | 保留（ip2location.7z 7.5M 已于第三轮删除） |
@@ -112,7 +112,7 @@ Go-Server 2.2M 不动。可删的源码部分已从 45.6K 行降到 35.6K 行，
 
 ## 第四轮（2026-11-05）：方案甲执行——类级闭包续删 + netty 打包排除
 
-决策报告 `RW-HPS-JAVA-SHELL-DECISION.md` 批准"方案甲第一步"。基线 `ed92ff0f`。
+决策报告 (SamuelPortal-docs 的 Java 壳决策文档) 批准"方案甲第一步"。基线 `ed92ff0f`。
 
 **判定方法（类级闭包，三路交叉 + 运行时种子）**：
 - 种子 = Helper 4 文件 + 运行时类载日志 224 类（第三轮后实测）+ `inject/**`
@@ -137,7 +137,7 @@ Go-Server 2.2M 不动。可删的源码部分已从 45.6K 行降到 35.6K 行，
 | D | `350a00b2` | util 30 文件 / 1,844 行 + `Sensitive_Thesaurus.txt`（2,156 行，BadWord.java 数据）：algorithms 4、compression 5、console 2、classload/file/plugin/game/log/alone/annotations 等，全部零引用或死岛互引 | 9.04s / 12.00s 全绿 |
 
 四批 E2E 结算证据一致：`结算: 获胜=[AI - Hard] 地图="Crossing Large (10p)" … 时长=8s`，
-回放文件正常生成；jar 内 `net/rwhps/server` 条目 762 → 695，死类全部归零。
+回放文件正常生成；jar 内 `io/github/corematch/avalonhelper` 条目 762 → 695，死类全部归零。
 
 **本轮数字**：删除 50 文件 / 3,219 行 + 资源 22,424 B；`git archive`
 25,344,000 → 25,169,920（−174,080 B）；Helper.jar 28,665,640 → 25,337,804
@@ -153,7 +153,7 @@ Go-Server 2.2M 不动。可删的源码部分已从 45.6K 行降到 35.6K 行，
 | `core/Application.kt`、`core/NetServer.kt` | 闭包内——`Data.kt:123` god object 字段初始化钉住，属枢纽边界 |
 
 **删到枢纽即停**：`Data.kt` god object、`NetStaticData` relay 簇（`RelayRoom`/
-`GameVersionRelay`/`internal/relay`）、`CustomServerSocket→IRwHpsManage→RwHps→
+`GameVersionRelay`/`internal/relay`）、`CustomServerSocket→ProtocolRegistry→ProtocolProvider→
 GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data/gameData
 全部未动。闭包复跑终态：闭包外仅剩上述 6 个保守区文件。
 
@@ -162,20 +162,20 @@ GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data
 三个试验、两条独立分支，纪律：四项硬验证全绿才合并。结果：**两试两过两合并，
 无回滚**；枢纽手术可行，但收益形态与预想不同（解链容易，删文件仍受静态引用面约束）。
 
-### 试验一（已合并）：`CustomServerSocket→IRwHpsManage→RwHps` 回退链 —— **可解开**
+### 试验一（已合并）：`CustomServerSocket→ProtocolRegistry→ProtocolProvider` 回退链 —— **可解开**
 
-- 分支 `exp/hub-trial-1-direct-rwhps`：`8576c0bf` → merge `8450dcda`。
-- 原链路：`CustomServerSocket.run()` → `IRwHpsManage.addIRwHps` → ServiceLoader
-  查 `"ServerProtocol"`（**从无注册**，恒抛 `ImplementedException`）→ 回退 `"IRwHps"`
-  → 反射构造 `RwHps`。异常驱动的确定性回退。
-- 改法：调用点直接构造 `RwHps(classLoader, ServerProtocol)`，经新增
-  `IRwHpsManage.registerIRwHps` 显式注册（同 key），`firstServer`/
-  `NetStaticData.RwHps` 读取面不变，语义等价。
+- 实验分支 `exp/hub-trial-1`：`8576c0bf` → merge `8450dcda`。
+- 原链路：`CustomServerSocket.run()` → `ProtocolRegistry.addProtocolProvider` → ServiceLoader
+  查 `"ServerProtocol"`（**从无注册**，恒抛 `ImplementedException`）→ 回退 `"IProtocolProvider"`
+  → 反射构造 `ProtocolProvider`。异常驱动的确定性回退。
+- 改法：调用点直接构造 `ProtocolProvider(classLoader, ServerProtocol)`，经新增
+  `ProtocolRegistry.registerProtocolProvider` 显式注册（同 key），`firstServer`/
+  `NetStaticData.ProtocolProvider` 读取面不变，语义等价。
 - 验证：干净克隆 `:Helper:jar` 13.7s（javap 确认新方法入 jar）；go build/vet/test
   49 包 22.2s 无 FAIL；V2Ext 9.79s；E2E 12.46s `结算: 获胜=[AI - Hard]`。
-- **死文件：0**。`IRwHpsManage` 未失去调用方——`NetStaticData.firstServer`
-  （lazy RwHps 提供者）与 `NetService` mix 分支（`mixProtocolEnable` 默认 false，
-  运行期死、静态活）仍引用。`"IRwHps"→RwHps` 注册同理保留（回退路径静态引用）。
+- **死文件：0**。`ProtocolRegistry` 未失去调用方——`NetStaticData.firstServer`
+  （lazy ProtocolProvider 提供者）与 `NetService` mix 分支（`mixProtocolEnable` 默认 false，
+  运行期死、静态活）仍引用。`"IProtocolProvider"→ProtocolProvider` 注册同理保留（回退路径静态引用）。
 - 结论：回退链可解开且零风险，但**解链本身不产生可删文件**——收益是为后续
   手术把"实现类在哪决定"显式化。
 
@@ -189,7 +189,7 @@ GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data
 - **运行时证据**（新 jar + `JAVA_TOOL_OPTIONS=-Xlog:class+load` 复跑 E2E，
   `/tmp/exp2-classlog.log` 5,525 行）：`NetStaticData` **0 加载**（连对象本身都
   从未初始化）、`RelayRoom`/`GameVersionRelay`/`GroupNet` 0 加载；对照
-  `CustomServerSocket` 4.027s、`RwHps` 0.49s 正常加载。
+  `CustomServerSocket` 4.027s、`ProtocolProvider` 0.49s 正常加载。
 - 关键问题回答：**helper 形态下 relay 簇是纯占位**——唯一触达点
   `GameVersionRelay:306/:432`（relay 协议连接路径），而 relay 已由 Go 侧自实现
   接管（第四轮批B 删 `Type*` 时证实，`Go-Server/internal/net/netconnectprotocol/
@@ -216,7 +216,7 @@ GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data
 
 | 枢纽 | 试验结论 | 下一步手术的实际障碍 |
 | --- | --- | --- |
-| `CustomServerSocket→IRwHpsManage→RwHps` | 已解开（`8450dcda`） | 删 `IRwHpsManage` 需先剪 `NetStaticData.firstServer` 与 `NetService` mix 分支静态引用 |
+| `CustomServerSocket→ProtocolRegistry→ProtocolProvider` | 已解开（`8450dcda`） | 删 `ProtocolRegistry` 需先剪 `NetStaticData.firstServer` 与 `NetService` mix 分支静态引用 |
 | `NetStaticData` relay 簇 | 惰性化通过（`a477d340`），簇纯占位 | 剩静态面：`relayRoom` 属性 + `GameVersionRelay` 触达点 + 簇内互引 |
 | `Data.core`（Application/NetServer） | 惰性可行但收益≈0 | 20 处活读取面，删除=大规模重写，建议最后做或不做 |
 
@@ -229,7 +229,7 @@ GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data
 | --- | --- | --- | --- | --- |
 | 1 | `81bbc009` | relay 协议/房间簇：删 `GameVersionRelay`(1062 行)/`RelayRoom`(404)/`AbstractNetConnectRelay`/`PlayerRelay`/`RelayPacketCache`/`internal/relay` 2 件，共 9 文件 −1,921 行；剪引用：`NetStaticData.relayRoom`、`UniversalAnalysis.getPacketTeamData`、`PlayerHess.playerJumpsToAnotherServer`（零调用）、`DataPermissionStatus.RelayStatus`、inject 未用 import | 9.18s / 11.52s | 删类 0 加载 |
 | 2 | `9fcb4e21` | `GroupNet` 广播池链：删 `net/GroupNet.kt`(112)；`AbstractNetConnect.close(groupNet?)`→`close()`；`ConnectionAgreement`×2（Server-Core+Helper 补丁）删 add/remove/close 的 groupNet 参数；`inject/GameVersionServer`、`inject/HessSocket` 调用点同步 | 8.63s / 11.45s | GroupNet 0 加载 |
-| 3 | `b2faf0c9` | 枢纽收窄：`NetStaticData.RwHps` lazy{firstServer}→`@Volatile var` 直赋（`CustomServerSocket` 构造后直接赋值）；删零调用的 `checkServerStartNet`；`NetService` 删 `mixProtocolEnable` 分支；连带删 `StartMixProtocol.kt`、`Cache.iRwHpsCache`、`Initialization` 三处 `ServiceType.IRwHps` 注册；**删 `IRwHpsManage.kt`（失去全部调用方）** | 9.00s / 11.43s | IRwHpsManage 0 加载，直连链正常 |
+| 3 | `b2faf0c9` | 枢纽收窄：`NetStaticData.ProtocolProvider` lazy{firstServer}→`@Volatile var` 直赋（`CustomServerSocket` 构造后直接赋值）；删零调用的 `checkServerStartNet`；`NetService` 删 `mixProtocolEnable` 分支；连带删 `StartMixProtocol.kt`、`Cache.protocolProviderCache`、`Initialization` 三处 `ServiceType.IProtocolProvider` 注册；**删 `ProtocolRegistry.kt`（失去全部调用方）** | 9.00s / 11.43s | ProtocolRegistry 0 加载，直连链正常 |
 | 4 | `b8815069` | 闭包复扫（类载并集种子 228 类）：删 `UniversalAnalysisOfGamePackages`(零引用, Go 已自实现)/`ParseException`/`GameOtherUtils`/`Rand`；`CallTimeTask` 删 12 死枚举项；`maven/*/{implementation,compileOnly}.txt` 4 件删除+gitignore（无读取方，构建自动重写残留）；过期注释修正 | 8.70s / 11.46s | 命中全为同构类（gson/JDK/引擎） |
 
 **批1 失败修复记录**：首次提交漏查 `internal/relay` 包的顶层函数引用
@@ -246,7 +246,7 @@ GameVersionPacket` 运行时链、Helper/inject/ASM/libs.zip/io/game 核心/data
 - `BeanRelayConfig`：`HelperMain:165` 启动初始化 + `Administration:70` 保存，活路径；
 - `Data.RELAY_COMMAND`、`Data.configRelay` 字段：`Data.kt` god object 边界；
 - `BeanCoreConfig.mixProtocolEnable`：json 反序列化兼容，保留配置字段；
-- `ServiceLoader.ServiceType.IRwHps` 枚举项：活类内部死项，无害；
+- `ServiceLoader.ServiceType.IProtocolProvider` 枚举项：活类内部死项，无害；
 - `struct/{IntMap,ObjectIntMap}`：relay 删除后新暴露的零引用零加载类，
   按 struct 容器保守区纪律保留（同 `IntSeq`/`SeqSave`/`LongIntMap`）。
 
@@ -341,7 +341,7 @@ E2E 11.54s 结算。
 | engine_socket | 3,810 ms | 3,926 ms | ≈持平 |
 | 常驻 RSS | ~475 MB | ~455 MB | **−20 MB（−4%）** |
 | 加载类总数 | 5,423 | 5,344 | **−79**（jna 44 + Rsa/PrintEx/eula 链） |
-| rwhps 类 | 479 | 479 | 持平 |
+| helper 类 | 479 | 479 | 持平 |
 
 **结论**：启动时间由闭源引擎装载主导（引擎载入 ~3-4s），jar 瘦身不改变
 启动速度；收益在分发体积（−1.95M）、常驻内存（−20MB）与加载类数。
@@ -371,7 +371,7 @@ gameData 9.7M + 闭源引擎 4.2M + libs.zip 6.4M + 必要依赖，均在保留�
 | `Server-Core/src/main/resources`（libs.zip 6.4M + HZK16/ASC16 字体 + bundles） | libs.zip 是引擎装载源（`GameModularReusableLoadClass` 按包前缀复制装载）；字体被保留类 `Font16` 静态引用 |
 | `dependent/redirections/**` + `plugin/internal/headless/**` | ASM 注入/重定向链。实例：`GameMainRedirections` 的 "Recording replay to:" 钩子是 `room.replayFileName` 的**唯一**写入点（本轮 E2E 竞态定位实证：结算的 `replayName` 就靠它异步落定） |
 | `com/corrodinggames/**` 引擎桥接补丁 | 被 `GoBridge`/`LinkGameNet` 等直接引用 |
-| `net/` 残余（NetService / NetStaticData / netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时直接构造 `RwHps` 并直赋 `NetStaticData.RwHps` |
+| `net/` 残余（NetService / NetStaticData / netconnectprotocol.realize 等） | `CustomServerSocket`（引擎桥接）运行时直接构造 `ProtocolProvider` 并直赋 `NetStaticData.ProtocolProvider` |
 | `core/Application.kt` + `core/NetServer.kt` | `Data.kt:123` god object 字段 `val core = Application()`，20 处活读取面；删除 = 大规模重写（枢纽试验三结论） |
 | kotlinx-coroutines / okhttp3 | 第六轮 ⑤ 逐一查证：两库均活，保留 |
 

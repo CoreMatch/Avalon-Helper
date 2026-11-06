@@ -1,6 +1,6 @@
 # Contributing
 
-**First of all, welcome to contribute to the RW-HPS project.**
+**First of all, welcome to contribute to the Avalon-Helper project.**
 
 ## Basic Guidelines
 

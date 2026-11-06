@@ -1,15 +1,14 @@
-name: Helper CI
+name: Avalon-Helper CI
 
 on:
   push:
   pull_request:
   workflow_dispatch:
 
-# 仓库瘦身 (2026-11-05): 取代已删的 Server-All workflow.
-# 本仓库唯一的发行物是 Go 服务端的外部游戏内核 helper (JDK 17).
+# 本仓库唯一的发行物是 Avalon 的服务端游戏内核 helper (JDK 17).
 # 本地等价命令:
 #   ./gradlew :Helper:jar -Dorg.gradle.java.home=/path/to/jdk-17
-#   产物: Helper/build/libs/Helper.jar
+#   产物: Helper/build/libs/avalon-helper.jar
 jobs:
   build_helper:
     runs-on: ubuntu-latest
@@ -24,13 +23,13 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Build Helper.jar
+      - name: Build avalon-helper.jar
         run: |
           chmod +x gradlew
           ./gradlew :Helper:jar --console=plain
 
-      - name: Upload Helper.jar
+      - name: Upload avalon-helper.jar
         uses: actions/upload-artifact@v7
         with:
-          name: Helper-jar
-          path: Helper/build/libs/Helper.jar
+          name: avalon-helper-jar
+          path: Helper/build/libs/avalon-helper.jar

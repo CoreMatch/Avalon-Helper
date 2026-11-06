@@ -38,7 +38,7 @@ tasks.compileKotlin {
 }
 
 tasks.jar {
-    archiveBaseName.set("Helper")
+    archiveBaseName.set("avalon-helper")
 
     // 清单裁剪: 去掉 fat jar 里与本模块无关的元数据/签名文件
     exclude("META-INF/version/**")
@@ -67,11 +67,11 @@ tasks.jar {
 
     manifest {
         // helper 自己的入口
-        attributes(mapOf("Main-Class" to "net.rwhps.server.helper.HelperMainKt"))
+        attributes(mapOf("Main-Class" to "io.github.corematch.avalonhelper.helper.HelperMainKt"))
         // ASM agent 自附着: java -jar 时先于 main 拿到 Instrumentation
-        attributes(mapOf("Launcher-Agent-Class" to "net.rwhps.server.dependent.AgentAttachData"))
+        attributes(mapOf("Launcher-Agent-Class" to "io.github.corematch.avalonhelper.dependent.AgentAttachData"))
         attributes(mapOf("Can-Redefine-Classes" to "true"))
-        attributes(mapOf("Implementation-Title" to "RW-HPS-Helper"))
+        attributes(mapOf("Implementation-Title" to "Avalon-Helper"))
         attributes(mapOf("Build-Jar-Time" to SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date().time)))
     }
 
@@ -80,8 +80,8 @@ tasks.jar {
     from(configurations.runtimeClasspath.get().map {
         if (it.isDirectory) it else zipTree(it)
     }) {
-        exclude("net/rwhps/server/net/core/ConnectionAgreement.class")
-        exclude("net/rwhps/server/net/core/ConnectionAgreement\$*.class")
+        exclude("io/github/corematch/avalonhelper/net/core/ConnectionAgreement.class")
+        exclude("io/github/corematch/avalonhelper/net/core/ConnectionAgreement\$*.class")
         // Go+helper 形态不承载任何 netty 网络栈 (运行时类载日志 0 命中):
         // 上游的 netty 依赖随 Server-Core api 传递进来, 打包期整体排除.
         exclude("io/netty/**")
