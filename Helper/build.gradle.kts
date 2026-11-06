@@ -40,7 +40,7 @@ tasks.compileKotlin {
 tasks.jar {
     archiveBaseName.set("Helper")
 
-    // 与 Server-All 相同的清单裁剪
+    // 清单裁剪: 去掉 fat jar 里与本模块无关的元数据/签名文件
     exclude("META-INF/version/**")
     exclude("**/module-info.class")
     exclude("META-INF/maven/**")
@@ -68,7 +68,7 @@ tasks.jar {
     manifest {
         // helper 自己的入口
         attributes(mapOf("Main-Class" to "net.rwhps.server.helper.HelperMainKt"))
-        // ASM agent 自附着 (与 Server-All 相同机制): java -jar 时先于 main 拿到 Instrumentation
+        // ASM agent 自附着: java -jar 时先于 main 拿到 Instrumentation
         attributes(mapOf("Launcher-Agent-Class" to "net.rwhps.server.dependent.AgentAttachData"))
         attributes(mapOf("Can-Redefine-Classes" to "true"))
         attributes(mapOf("Implementation-Title" to "RW-HPS-Helper"))
