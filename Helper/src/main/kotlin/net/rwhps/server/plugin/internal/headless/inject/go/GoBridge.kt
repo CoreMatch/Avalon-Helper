@@ -2,7 +2,7 @@
  * Helper: 游戏 classloader 内的桥接层 (协议适配器 <-> 上游 headless 内核).
  *
  * 有意修正（作者已批准，2026-11-04）: 上游内核留在 JVM 侧, 本类把上游
- * "Netty 网络层 + 控制台" 替换为 Go-Server/docs/HELPER-PROTOCOL.md 的
+ * "Netty 网络层 + 控制台" 替换为 Avalon 仓库 (CoreMatch/Avalon) docs/HELPER-PROTOCOL.md 的
  * v2/v2-ext 线协议. 全部引擎操作复用上游桥接类 (GameEngine/PlayerConnectX/
  * NetEnginePackaging/ScriptMultiPlayer/GameHessData 等), 不重写模拟逻辑.
  *

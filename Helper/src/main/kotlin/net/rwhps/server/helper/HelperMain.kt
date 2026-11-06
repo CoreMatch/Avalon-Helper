@@ -2,7 +2,7 @@
  * Helper: Go 服务端的外部游戏内核进程入口 (protocol v2 / v2-ext 的 helper 侧).
  *
  * 有意修正（作者已批准，2026-11-04）: 上游 RW-HPS 的 headless 内核留在 JVM 侧,
- * Go 经 Go-Server/docs/HELPER-PROTOCOL.md 的线协议驱动 (DECISIONS D-9/D-14 后续).
+ * Go 经 Avalon 仓库 (CoreMatch/Avalon) docs/HELPER-PROTOCOL.md 的线协议驱动 (DECISIONS D-9/D-14 后续).
  * 本进程是薄封装:
  *
  *   - 引擎装载链完全复用上游: GameModularReusableLoadClass + GameStartInit

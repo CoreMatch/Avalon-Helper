@@ -1,5 +1,8 @@
 # REPO-SLIM: 以 Helper 编译/运行闭包为判据的仓库瘦身（最终版）
 
+> 注：本文是瘦身当时的记录。文中 `Go-Server/` 现已迁至独立仓库
+> [Avalon](https://github.com/CoreMatch/Avalon)（Go 运行时主体）。
+
 日期: 2026-11-04 ～ 2026-11-05 · 基线: `master` @ `b0fbccfa`（第一轮前）
 六轮执行：第一轮 `89dc0d0a`（保守档），第二轮激进档 `0e82df79…a7cddd6c`，
 第三轮 IP 定位整链 `2a096b08…007e1f10`，第四轮方案甲闭包续删 + netty 排除

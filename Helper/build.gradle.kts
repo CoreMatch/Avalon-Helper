@@ -2,11 +2,11 @@
  * Helper: Go 服务端的外部游戏内核进程 (protocol v2 / v2-ext 的 helper 侧实现).
  *
  * 有意修正（作者已批准，2026-11-04）: 上游内核留在 JVM 侧, Go 经
- * Go-Server/docs/HELPER-PROTOCOL.md 定义的线协议驱动. 本模块是薄封装:
- * 复用 Server-Core 的 headless 内核装载链与引擎桥接类, 只把"客户端网络层"
- * 换成 stdin/stdout 协议适配器.
+ * Avalon 仓库 (CoreMatch/Avalon) docs/HELPER-PROTOCOL.md 定义的线协议驱动.
+ * 本模块是薄封装: 复用 Server-Core 的 headless 内核装载链与引擎桥接类,
+ * 只把"客户端网络层"换成 stdin/stdout 协议适配器.
  *
- * 构建: ./gradlew :Helper:jar   (需 JDK 17, 见 Go-Server/README.md)
+ * 构建: ./gradlew :Helper:jar   (需 JDK 17, 见 Avalon 仓库 README.md)
  * 产物: Helper/build/libs/Helper.jar (fat jar, 不入库)
  */
 

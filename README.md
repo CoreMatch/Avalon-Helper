@@ -11,64 +11,41 @@ _**Personal project, for learning only**_
 
 ## Current Architecture
 
-运行时主体是 **Go**；Java/Kotlin 侧只承担"承载闭源游戏引擎的壳"。
-共 4 个模块（另有 `buildSrc` 为 Gradle 构建工具，不算产品模块）：
+本仓库承载 **Java/Kotlin 引擎壳**：承载闭源游戏引擎，把它作为独立 Java 进程
+（helper）提供给 Go 运行时主体
+[Avalon](https://github.com/CoreMatch/Avalon)，经 stdin/stdout 线协议
+（v2 / v2-ext）接受 Go 侧驱动。共 3 个模块（另有 `buildSrc` 为 Gradle 构建
+工具，不算产品模块）：
 
 | 模块 | 语言 | 职责 |
 | --- | --- | --- |
-| `Go-Server/` | Go | **运行时主体**：网关、房间、玩家与协议处理、控制台、HTTP API、Cascade 对接 |
 | `Helper/` | Kotlin | 引擎壳：把上游 headless 内核封装为独立 Java 进程，经 stdin/stdout 线协议（v2 / v2-ext）接受 Go 侧驱动 |
 | `Server-Core/` | Java/Kotlin | 上游服务端实体与引擎装载链（在 helper 的 JVM 内被加载） |
 | `ASM-Framework/` | Kotlin | 字节码改写框架，装载期修补闭源引擎 |
 
-Go 无法执行 Java 字节码，因此游戏模拟内核外置为 helper 进程；两者经
-`Go-Server/docs/HELPER-PROTOCOL.md` 定义的线协议解耦。不配置 helper 时
-Go 服务端仍可完整启动（控制台/HTTP/房间管理），只是无法真实开局。
-细节见 [`Go-Server/README.md`](Go-Server/README.md)。
+线协议定义、运行形态与配置见 Avalon 仓库（`docs/HELPER-PROTOCOL.md` 与
+`docs/DISTRIBUTION.md`）。`data/gameData` 为引擎所需游戏数据，随本仓库提供。
 
 ## Build
 
-- **Go 1.22+**（Go 主体）
 - **JDK 17**（构建引擎壳；引擎与 Kotlin 运行时按 JDK 17 验证）
 
 ```bash
-# 1. 引擎壳 (产物 Helper/build/libs/Helper.jar)
+# 产物 Helper/build/libs/Helper.jar
 JAVA_HOME=<jdk17> ./gradlew :Helper:jar
-
-# 2. Go 主体 (产物 Go-Server/rwhps)
-cd Go-Server
-go build -o rwhps ./cmd/rwhps
-```
-
-提交前校验（必须全绿）：
-
-```bash
-cd Go-Server
-go build ./...
-go vet ./...
-go test ./... -count=1    # 含真实 helper 集成测试 (自动发现 Helper.jar 与 JDK 17, 缺失则跳过)
 ```
 
 ## Run
 
-推荐分发包形态（干净目录自足，不依赖仓库环境）：
-
-```bash
-./dist/build-dist.sh      # 产出 dist/out/rwhps-<hash>-linux-<arch>.tar.gz
-```
-
-包内容、启动步骤、配置键与升级方式见 [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md)。
-
-运行要求：Linux + **JRE/JDK 17** 的 `java` 在 `PATH` 中（或在配置里显式指定
-`javaPath`）。首次启动有 EULA 确认，随后自动加载游戏内核并监听配置端口
-（默认 5123）。
+helper 不是独立运行的服务端：它由 Avalon 的 Go 服务端经 `gameHelperPath`
+配置拉起（配置接入与分发包见 Avalon 仓库 `README.md` 与
+`docs/DISTRIBUTION.md`）。
 
 ## Documentation
 
-- [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) —— 分发包内容与升级方式
-- [`Go-Server/docs/HELPER-PROTOCOL.md`](Go-Server/docs/HELPER-PROTOCOL.md) —— Go ↔ helper 线协议（v2 / v2-ext）
 - [`docs/REPO-SLIM.md`](docs/REPO-SLIM.md) —— 仓库瘦身记录与"当前不可再删项"护栏
-- [`docs/BASELINE.md`](docs/BASELINE.md) —— 回归基线（E2E / 启动 / 内存 / 类数）
+- 线协议合同：Avalon 仓库 `docs/HELPER-PROTOCOL.md`
+- 分发与运行：Avalon 仓库 `docs/DISTRIBUTION.md`、`docs/BASELINE.md`
 
 ## Statements
 
