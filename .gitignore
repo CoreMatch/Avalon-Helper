@@ -5,7 +5,6 @@ logs/
 /TimeTaskQuartz/build/
 /Java-Doc/pages/
 /*/build/
-/dist/out/
 config/
 *.gif
 
