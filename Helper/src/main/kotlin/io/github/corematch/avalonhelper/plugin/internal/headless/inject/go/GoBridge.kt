@@ -124,9 +124,15 @@ object GoBridge {
      * 的自定义分支 —— 引擎从服务端 maps 目录装载指定文件
      * (/SD/rusted_warfare_maps 由 FileLoaderRedirections 改道到 data/maps);
      * 地图文件本身由 Go 侧在 room.start 前经 MapData.ReadMap 落盘 (zip 先解包).
+     *
+     * mapSha256/mapSize (协议 v4): 引擎自定义地图分支开局时会把该文件作为
+     * 地图流随 START_GAME 推给客户端 (引擎内置流送), 流送前在这里按 Go 侧
+     * 清单复核文件字节 —— 同名不同内容不当作已有: 缺失或哈希/大小不符即
+     * 拒绝开局 (类型化错误经 room.start 应答回传), 不留给引擎事后的一句
+     * "Map error starting game". 清单为空 (旧式请求) 时明确失败, 不静默放行.
      */
     @JvmStatic
-    fun roomStart(mapName: String, mapPlayer: String, mapType: String, mapFile: String) {
+    fun roomStart(mapName: String, mapPlayer: String, mapType: String, mapFile: String, mapSha256: String, mapSize: Long) {
         val module = GameEngine.data
         if (module.room.isStartGame) {
             return
@@ -137,6 +143,7 @@ object GoBridge {
                 throw IllegalArgumentException("unsafe mapFile: $mapFile")
             }
             val type = if (mapType == "SavedGames") GameMaps.MapType.SavedGames else GameMaps.MapType.CustomMap
+            verifyMapFile(type, mapFile, mapSha256, mapSize)
             module.room.maps.mapName = mapName.ifBlank { mapFile.substringBeforeLast('.') }
             module.room.maps.mapPlayer = ""
             module.room.maps.mapType = type
@@ -163,6 +170,40 @@ object GoBridge {
         // CallManage 检查线程职责重叠.
         module.room.isStartGame = true
         setRoomTime(module.room)
+    }
+
+    /**
+     * 协议 v4 地图清单复核: 引擎开局时会把该文件随 START_GAME 流送给客户端
+     * (自定义地图走 data/maps, 存档走 data/saves 的 "saves/" 解析), 开局前
+     * 确认盘上字节与 Go 侧清单一致.
+     * 缺失 -> "map file missing"; 大小/SHA-256 不符 -> "map content mismatch".
+     * mapSha256 为空视为协议违例 (v4 下 Go 侧必带), 明确失败不静默放行.
+     */
+    private fun verifyMapFile(type: GameMaps.MapType, mapFile: String, mapSha256: String, mapSize: Long) {
+        if (mapSha256.isEmpty()) {
+            throw IllegalArgumentException("mapSha256 required for non-default map (protocol v4)")
+        }
+        val dir = if (type == GameMaps.MapType.SavedGames) Data.ServerSavePath else Data.ServerMapsPath
+        val file = java.io.File(io.github.corematch.avalonhelper.util.file.FileUtils.getPath(dir), mapFile)
+        if (!file.isFile) {
+            throw IllegalArgumentException("map file missing: $mapFile")
+        }
+        if (mapSize >= 0 && file.length() != mapSize) {
+            throw IllegalArgumentException("map content mismatch: $mapFile (size ${file.length()} != $mapSize)")
+        }
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { ins ->
+            val buf = ByteArray(64 * 1024)
+            while (true) {
+                val n = ins.read(buf)
+                if (n < 0) break
+                digest.update(buf, 0, n)
+            }
+        }
+        val hex = digest.digest().joinToString("") { "%02x".format(it) }
+        if (!hex.equals(mapSha256, ignoreCase = true)) {
+            throw IllegalArgumentException("map content mismatch: $mapFile (sha256 $hex != $mapSha256)")
+        }
     }
 
     /** startTime/endTime 为 private set, 反射写入 (字段名对应上游 ServerRoom) */

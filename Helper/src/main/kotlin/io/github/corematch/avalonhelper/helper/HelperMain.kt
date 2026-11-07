@@ -48,7 +48,7 @@ private val engineReady = CountDownLatch(1)
 private var gen: Long = 0
 
 /** 线协议版本 (与 Avalon internal/game/external/protocol.go::ProtocolVersion 一致) */
-private const val PROTOCOL_VERSION = 3
+private const val PROTOCOL_VERSION = 4
 
 /** 当前房间 ID (room.create 记录; 单房间语义与 Go 侧 Backend 一致) */
 @Volatile
@@ -301,11 +301,16 @@ private fun dispatch(line: String) {
                     String::class.java to (req.get("map")?.asString ?: ""),
                     String::class.java to (req.get("mapPlayer")?.asString ?: ""),
                     String::class.java to (req.get("mapType")?.asString ?: ""),
-                    String::class.java to (req.get("mapFile")?.asString ?: "")
+                    String::class.java to (req.get("mapFile")?.asString ?: ""),
+                    String::class.java to (req.get("mapSha256")?.asString ?: ""),
+                    Long::class.javaPrimitiveType!! to (req.get("mapSize")?.asLong ?: -1L)
                 )
                 respond(id, true)
             } catch (e: Exception) {
-                respond(id, false, "room.start failed: ${e.message}")
+                // 反射调用会把 GoBridge 的类型化错误 (如 "map file missing: X")
+                // 包进 InvocationTargetException, 解包后原文回传 Go 侧
+                val cause = (e as? java.lang.reflect.InvocationTargetException)?.cause ?: e
+                respond(id, false, "room.start failed: ${cause.message}")
             }
         }
 
