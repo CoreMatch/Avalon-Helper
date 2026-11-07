@@ -119,14 +119,31 @@ object GoBridge {
      * 地图装载照搬上游 ServerCommands.mapchange 的默认地图分支 +
      * ClientCommands.start 的收尾 (multiplayerStart + fire ServerGameStartEvent
      * 由引擎 START_GAME 包回传时的 roomStartGame 完成状态迁移).
+     *
+     * mapType/mapFile (协议 v3): 非默认地图分支, 照搬上游 ClientCommands.map
+     * 的自定义分支 —— 引擎从服务端 maps 目录装载指定文件
+     * (/SD/rusted_warfare_maps 由 FileLoaderRedirections 改道到 data/maps);
+     * 地图文件本身由 Go 侧在 room.start 前经 MapData.ReadMap 落盘 (zip 先解包).
      */
     @JvmStatic
-    fun roomStart(mapName: String, mapPlayer: String) {
+    fun roomStart(mapName: String, mapPlayer: String, mapType: String, mapFile: String) {
         val module = GameEngine.data
         if (module.room.isStartGame) {
             return
         }
-        if (mapName.isNotBlank()) {
+        if (mapType == "CustomMap" || mapType == "SavedGames") {
+            // mapFile 会拼进引擎加载路径: 拒绝路径穿越 (Go 侧登记时已过滤, 此处兜底)
+            if (mapFile.isEmpty() || mapFile.contains('/') || mapFile.contains('\\') || mapFile.contains("..")) {
+                throw IllegalArgumentException("unsafe mapFile: $mapFile")
+            }
+            val type = if (mapType == "SavedGames") GameMaps.MapType.SavedGames else GameMaps.MapType.CustomMap
+            module.room.maps.mapName = mapName.ifBlank { mapFile.substringBeforeLast('.') }
+            module.room.maps.mapPlayer = ""
+            module.room.maps.mapType = type
+            GameEngine.netEngine.az = "/SD/rusted_warfare_maps/$mapFile"
+            GameEngine.netEngine.ay.a = ai.entries.toTypedArray()[type.ordinal]
+            GameEngine.netEngine.ay.b = mapFile
+        } else if (mapName.isNotBlank()) {
             module.room.maps.mapName = mapName
             module.room.maps.mapPlayer = mapPlayer
             module.room.maps.mapType = GameMaps.MapType.DefaultMap

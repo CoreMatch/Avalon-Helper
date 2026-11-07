@@ -48,7 +48,7 @@ private val engineReady = CountDownLatch(1)
 private var gen: Long = 0
 
 /** 线协议版本 (与 Avalon internal/game/external/protocol.go::ProtocolVersion 一致) */
-private const val PROTOCOL_VERSION = 2
+private const val PROTOCOL_VERSION = 3
 
 /** 当前房间 ID (room.create 记录; 单房间语义与 Go 侧 Backend 一致) */
 @Volatile
@@ -87,7 +87,7 @@ private fun writeLine(json: String) {
 /** 拼一条 response; extra 字段按需追加 */
 private fun respond(id: Long, ok: Boolean, error: String? = null, extra: JsonObject? = null) {
     val o = JsonObject()
-    o.addProperty("v", 2)
+    o.addProperty("v", PROTOCOL_VERSION)
     o.addProperty("type", "response")
     o.addProperty("gen", gen)
     o.addProperty("id", id)
@@ -105,7 +105,7 @@ private fun unsupported(id: Long) = respond(id, false, "unsupported")
 private val eventsImpl = object: HelperEvents {
     override fun onPacket(conn: String, ptype: Int, data: ByteArray) {
         val o = JsonObject()
-        o.addProperty("v", 2)
+        o.addProperty("v", PROTOCOL_VERSION)
         o.addProperty("type", "packet")
         o.addProperty("gen", gen)
         o.addProperty("room", roomId)
@@ -117,7 +117,7 @@ private val eventsImpl = object: HelperEvents {
 
     override fun onEvent(name: String, conn: String, dataJson: String) {
         val o = JsonObject()
-        o.addProperty("v", 2)
+        o.addProperty("v", PROTOCOL_VERSION)
         o.addProperty("type", "event")
         o.addProperty("gen", gen)
         o.addProperty("event", name)
@@ -133,7 +133,7 @@ private val eventsImpl = object: HelperEvents {
 
     override fun onFatal(error: String) {
         val o = JsonObject()
-        o.addProperty("v", 2)
+        o.addProperty("v", PROTOCOL_VERSION)
         o.addProperty("type", "fatal")
         o.addProperty("gen", gen)
         o.addProperty("error", error)
@@ -295,12 +295,18 @@ private fun dispatch(line: String) {
             if (errReason != null) {
                 respond(id, false, errReason); return
             }
-            Bridge.call(
-                "roomStart",
-                String::class.java to (req.get("map")?.asString ?: ""),
-                String::class.java to (req.get("mapPlayer")?.asString ?: "")
-            )
-            respond(id, true)
+            try {
+                Bridge.call(
+                    "roomStart",
+                    String::class.java to (req.get("map")?.asString ?: ""),
+                    String::class.java to (req.get("mapPlayer")?.asString ?: ""),
+                    String::class.java to (req.get("mapType")?.asString ?: ""),
+                    String::class.java to (req.get("mapFile")?.asString ?: "")
+                )
+                respond(id, true)
+            } catch (e: Exception) {
+                respond(id, false, "room.start failed: ${e.message}")
+            }
         }
 
         "room.stop" -> {
