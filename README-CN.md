@@ -27,7 +27,7 @@ Rusted Warfare 游戏引擎承载为独立 JVM 进程，经 stdin/stdout 线协�
 
 ## 构建
 
-- **JDK 17**（过新的 JDK 会使 Kotlin 2.0.0 编译器崩溃）
+- **JDK 17**（与 CI 一致；Gradle 8.6 运行上限为 JDK 21，Kotlin 2.4.21 编译器本身兼容更新）
 
 ```bash
 # 产物: Helper/build/libs/avalon-helper.jar (fat jar, 不入库)

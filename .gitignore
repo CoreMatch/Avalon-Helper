@@ -36,6 +36,8 @@ crash-report-*
 
 /local.properties
 .gradle/
+# KGP 项目数据目录 (kotlin.project.persistent.dir), 不入库
+.kotlin/
 gradle-app.setting
 /build/
 
