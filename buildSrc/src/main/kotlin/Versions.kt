@@ -18,7 +18,7 @@ object Versions {
     const val jLineVersion = "3.25.1"
 
     // Kotlin Version
-    const val kotlinVersion = "2.0.0"
+    const val kotlinVersion = "2.4.21"
 
     // Graalvm Version
     const val graalvmVersion = "22.3.2"
