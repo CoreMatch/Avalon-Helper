@@ -26,7 +26,6 @@ dependencies {
     api("io.netty:netty-transport:${Versions.nettyVersion}")
     api("io.netty:netty-transport-native-epoll:${Versions.nettyVersion}:linux-aarch_64")
     api("io.netty:netty-transport-native-epoll:${Versions.nettyVersion}:linux-x86_64")
-    api("com.lmax:disruptor:3.4.4")
 
 
     compileOnly(fileTree(mapOf("dir" to "libs", "include" to "game-lib.jar")))
@@ -42,9 +41,6 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0") {
         exclude("org.jetbrains.kotlin")
-    }
-    api("com.vdurmont:emoji-java:5.1.1") {
-        exclude("org.json")
     }
 
     // 仓库瘦身阶段二 (2026-11-05): 移除 net.java.dev.jna:jna 与
