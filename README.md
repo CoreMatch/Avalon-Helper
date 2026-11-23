@@ -1,47 +1,30 @@
-# Avalon-Helper
+<div align="center">
+  <h1>Avalon-Helper</h1>
+  <p><strong>The isolated JVM behind real Avalon matches.</strong></p>
+  <p><a href="./README.zh-CN.md">简体中文</a></p>
+</div>
 
-[Avalon](https://github.com/CoreMatch/Avalon) 的服务端游戏引擎 helper：把闭源
-Rusted Warfare 游戏引擎承载为独立 JVM 进程，经 stdin/stdout 线协议
-（v2 / v2-ext）接受 Avalon 的驱动。
+Avalon-Helper is the thin stdin/stdout JSON bridge between Avalon and the closed-source Rusted Warfare engine. It exists for server operators and integrators that need real simulation with a clean process boundary.
 
-[English version / 英文介绍](README.md) **或** [Chinese version / 中文介绍](README-CN.md)
+## Why Avalon-Helper
 
-## 职责
+- **Keep the wire clean.** Protocol stdout carries JSON while engine output stays separate.
+- **Start on the current contract.** A strict v4 handshake rejects stale protocol versions before simulation starts.
+- **Reuse the engine.** Existing engine loading and ASM integration remain in the helper JVM.
+- **Isolate crashes.** Engine failures stay outside Avalon's Go process instead of taking the host down with them.
+- **Integrate without reimplementation.** Avalon sends simulation work and receives game events over a narrow bridge.
 
-本仓库是引擎壳，不是独立运行的游戏服务端：
+## Learn more
 
-| 模块 | 语言 | 职责 |
-| --- | --- | --- |
-| `Helper/` | Kotlin | 协议入口：`HelperMain` 协议主循环 + `GoBridge` 引擎桥接，v2 / v2-ext 全部操作 |
-| `Server-Core/` | Java/Kotlin | 引擎装载链与桥接类（在 helper 的 JVM 内被加载） |
-| `ASM-Framework/` | Kotlin | 字节码改写框架，装载期修补闭源引擎 |
+- [Avalon](https://github.com/CoreMatch/Avalon) — the server runtime that drives the helper
+- [Avalon operations](https://github.com/CoreMatch/Avalon/blob/main/docs/OPERATIONS.md) — operator-facing integration guidance
+- [HA Contract](https://github.com/CoreMatch/HA-Contract) — canonical ecosystem contracts
+- [Lineage record](docs/LINEAGE-COPYCAT.md) — derivative provenance and upstream comparison
 
-运行时主体（网关 / 房间 / 协议 / 控制台 / HTTP）在 Avalon 仓库；Avalon 经
-`gameHelperPath` 拉起本进程，本进程经线协议接受驱动并回传游戏事件与包。
-不配置 helper 时 Avalon 仍可完整启动，只是无法真实开局。
+## Limits
 
-## 线协议
+Avalon-Helper is not a standalone server, does not open-source the game engine, and does not support arbitrary engine versions.
 
-契约在 Avalon 仓库：`docs/HELPER-PROTOCOL.md`（权威实现
-`internal/game/external/protocol.go`）。本仓库只有 helper 侧实现，不存第二份。
+## License and provenance
 
-## 构建
-
-- **JDK 17**（与 CI 一致；Gradle 8.6 运行上限为 JDK 21，Kotlin 2.4.21 编译器本身兼容更新）
-
-```bash
-# 产物: Helper/build/libs/avalon-helper.jar (fat jar, 不入库)
-JAVA_HOME=<jdk17> ./gradlew :Helper:jar
-```
-
-## 被 Avalon 拉起
-
-Avalon 以 `gameHelperPath` 指向 `avalon-helper.jar`，并用
-`-Davalonhelper.dataPath` 指定 helper 的数据目录（其下 `data/gameData` 为引擎
-所需游戏数据，随本仓库提供）。运行配置、分发包与验收见 Avalon 仓库
-`README.md` 与 `docs/DISTRIBUTION.md`。
-
-## 许可证
-
-GNU AGPLv3（见 [`LICENSE`](LICENSE)）。本程序源自上游 RW-HPS 项目；按 AGPL
-要求，源文件头部保留上游版权声明。
+[AGPL-3.0](LICENSE) · Derived from [RW-HPS](https://github.com/RW-HPS/RW-HPS); upstream copyright notices are retained.
