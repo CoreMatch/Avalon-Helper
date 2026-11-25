@@ -18,7 +18,7 @@ Avalon-Helper 是 Avalon 与闭源 Rusted Warfare 引擎之间的轻量 stdin/st
 
 - [Avalon](https://github.com/CoreMatch/Avalon) — 驱动 helper 的服务端运行时
 - [Avalon 运维文档](https://github.com/CoreMatch/Avalon/blob/main/docs/OPERATIONS.md) — 面向运维者的集成指南
-- [HA 契约](https://github.com/CoreMatch/HA-Contract) — 生态权威契约
+- [Armorial 契约](https://github.com/CoreMatch/HA-Contract) — 生态权威契约
 - [谱系记录](docs/LINEAGE-COPYCAT.md) — 衍生来源与上游对照
 
 ## 使用边界

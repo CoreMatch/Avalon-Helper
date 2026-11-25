@@ -18,7 +18,7 @@ Avalon-Helper is the thin stdin/stdout JSON bridge between Avalon and the closed
 
 - [Avalon](https://github.com/CoreMatch/Avalon) — the server runtime that drives the helper
 - [Avalon operations](https://github.com/CoreMatch/Avalon/blob/main/docs/OPERATIONS.md) — operator-facing integration guidance
-- [HA Contract](https://github.com/CoreMatch/HA-Contract) — canonical ecosystem contracts
+- [Armorial Contract](https://github.com/CoreMatch/HA-Contract) — canonical ecosystem contracts
 - [Lineage record](docs/LINEAGE-COPYCAT.md) — derivative provenance and upstream comparison
 
 ## Limits
